@@ -16,7 +16,7 @@
       "confidence": {"type": "number", "minimum": 0, "maximum": 1},
       "detectors": {
         "type": "array",
-        "items": {"enum": ["semgrep", "gpt-5.6"]},
+        "items": {"enum": ["semgrep", "builtin-static", "gpt-5.6"]},
         "minItems": 1,
         "uniqueItems": true
       },

@@ -11,9 +11,14 @@ requires-python = ">=3.11"
 dependencies = []
 
 [project.optional-dependencies]
-test = ["pytest>=8.3,<9"]
+test = ["pytest>=9.1,<10"]
+watcher = ["semgrep==1.170.0"]
 
 [tool.pytest.ini_options]
 pythonpath = ["seeded_repo/src"]
-testpaths = ["seeded_repo/tests"]
+testpaths = ["agents/tests", "eval/tests"]
 addopts = "-q"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agents*", "eval*"]
