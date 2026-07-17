@@ -1,0 +1,79 @@
+[
+  {
+    "id": "bug_001",
+    "file": "src/autofix_seed/payments.py",
+    "line_range": {"start": 6, "end": 7},
+    "type": "security",
+    "severity": "high",
+    "description": "A customer identifier is interpolated directly into a SQL query, enabling SQL injection.",
+    "expected_detector": "semgrep",
+    "expected_fix_type": "parameterized query with separately bound values",
+    "test_id": "tests/test_payments.py::PaymentLookupTests::test_customer_id_is_bound_as_a_parameter"
+  },
+  {
+    "id": "bug_002",
+    "file": "src/autofix_seed/auth.py",
+    "line_range": {"start": 4, "end": 4},
+    "type": "security",
+    "severity": "high",
+    "description": "A synthetic JWT signing secret is hardcoded in source instead of being loaded from protected configuration.",
+    "expected_detector": "semgrep",
+    "expected_fix_type": "required environment or secret-store configuration",
+    "test_id": null
+  },
+  {
+    "id": "bug_003",
+    "file": "src/autofix_seed/inventory.py",
+    "line_range": {"start": 6, "end": 6},
+    "type": "logic",
+    "severity": "medium",
+    "description": "The final inventory entry is omitted by an off-by-one range boundary.",
+    "expected_detector": "gpt-5.6",
+    "expected_fix_type": "include every quantity in the total",
+    "test_id": "tests/test_inventory.py::InventoryTests::test_total_stock_includes_the_final_entry"
+  },
+  {
+    "id": "bug_004",
+    "file": "src/autofix_seed/shipping.py",
+    "line_range": {"start": 6, "end": 8},
+    "type": "logic",
+    "severity": "medium",
+    "description": "The free-shipping threshold uses a strict comparison and incorrectly charges orders exactly at the threshold.",
+    "expected_detector": "gpt-5.6",
+    "expected_fix_type": "inclusive threshold comparison",
+    "test_id": "tests/test_shipping.py::ShippingTests::test_threshold_itself_receives_free_shipping"
+  },
+  {
+    "id": "bug_005",
+    "file": "src/autofix_seed/shipping.py",
+    "line_range": {"start": 13, "end": 14},
+    "type": "code_quality",
+    "severity": "low",
+    "description": "A normalized country value is computed but ignored, producing inconsistent labels and leaving an unused variable.",
+    "expected_detector": "semgrep",
+    "expected_fix_type": "use the normalized country in the returned label",
+    "test_id": "tests/test_shipping.py::ShippingTests::test_country_is_trimmed_and_normalized"
+  },
+  {
+    "id": "bug_006",
+    "file": "src/autofix_seed/config.py",
+    "line_range": {"start": 11, "end": 13},
+    "type": "code_quality",
+    "severity": "medium",
+    "description": "Configuration parsing leaks low-level file and JSON exceptions instead of raising the documented domain-specific error.",
+    "expected_detector": "gpt-5.6",
+    "expected_fix_type": "catch expected load failures and raise ConfigError with exception chaining",
+    "test_id": "tests/test_config.py::ConfigTests::test_invalid_json_raises_domain_specific_error"
+  },
+  {
+    "id": "bug_007",
+    "file": "src/autofix_seed/auth.py",
+    "line_range": {"start": 7, "end": 12},
+    "type": "semantic_authorization",
+    "severity": "high",
+    "description": "Refund authorization ignores the actor role, so an administrator cannot refund another customer's order despite the documented policy.",
+    "expected_detector": "gpt-5.6",
+    "expected_fix_type": "authorize the owner or an actor with the administrator role",
+    "test_id": "tests/test_auth.py::RefundAuthorizationTests::test_administrator_can_refund_an_order_owned_by_someone_else"
+  }
+]

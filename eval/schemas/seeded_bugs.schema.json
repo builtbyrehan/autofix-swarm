@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://autofix-swarm.local/schemas/seeded-bugs.schema.json",
+  "title": "AutoFix Swarm ground-truth bug list",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id",
+      "file",
+      "line_range",
+      "type",
+      "severity",
+      "description",
+      "expected_detector",
+      "expected_fix_type",
+      "test_id"
+    ],
+    "properties": {
+      "id": {"type": "string", "pattern": "^bug_[0-9]{3}$"},
+      "file": {"type": "string", "minLength": 1},
+      "line_range": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["start", "end"],
+        "properties": {
+          "start": {"type": "integer", "minimum": 1},
+          "end": {"type": "integer", "minimum": 1}
+        }
+      },
+      "type": {"type": "string", "minLength": 1},
+      "severity": {"enum": ["critical", "high", "medium", "low"]},
+      "description": {"type": "string", "minLength": 1},
+      "expected_detector": {"enum": ["semgrep", "gpt-5.6"]},
+      "expected_fix_type": {"type": "string", "minLength": 1},
+      "test_id": {"type": ["string", "null"]}
+    }
+  }
+}

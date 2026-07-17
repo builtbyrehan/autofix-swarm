@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autofix-swarm"
+version = "0.1.0"
+description = "Evaluated, sandboxed bug detection and remediation agents"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=8.3,<9"]
+
+[tool.pytest.ini_options]
+pythonpath = ["seeded_repo/src"]
+testpaths = ["seeded_repo/tests"]
+addopts = "-q"
