@@ -14,8 +14,8 @@ dependencies = []
 test = ["pytest>=8.3,<9"]
 
 [tool.pytest.ini_options]
-pythonpath = ["seeded_repo/src"]
-testpaths = ["seeded_repo/tests"]
+pythonpath = ["seeded_repo/src", "agents"]
+testpaths = ["seeded_repo/tests", "agents/tests", "eval/tests", "sandbox/tests"]
 addopts = "-q"
 markers = [
     "integration: tests that require a working Docker daemon",
