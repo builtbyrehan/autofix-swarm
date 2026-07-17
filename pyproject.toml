@@ -17,3 +17,6 @@ test = ["pytest>=8.3,<9"]
 pythonpath = ["seeded_repo/src"]
 testpaths = ["seeded_repo/tests"]
 addopts = "-q"
+markers = [
+    "integration: tests that require a working Docker daemon",
+]
