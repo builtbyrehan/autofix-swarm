@@ -279,6 +279,7 @@ class CodexCliRunner:
             str(cwd),
             "--ephemeral",
             "--json",
+            "--skip-git-repo-check",
         ]
 
         start = time.monotonic()
