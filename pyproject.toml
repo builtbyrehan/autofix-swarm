@@ -18,7 +18,10 @@ watcher = ["semgrep==1.170.0"]
 pythonpath = ["seeded_repo/src"]
 testpaths = ["agents/tests", "eval/tests"]
 addopts = "-q"
+markers = [
+    "integration: tests that require a working Docker daemon",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["agents*", "eval*"]
+include = ["agents*", "eval*", "sandbox*"]
