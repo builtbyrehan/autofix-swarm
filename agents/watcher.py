@@ -227,11 +227,20 @@ class Watcher:
                 # Extract issue details from Semgrep output
                 issue_id = f"semgrep_{idx+1:03d}"
                 path = finding.get("path", "unknown")
+
+                # Normalize path: convert backslashes to forward slashes
+                path = path.replace("\\", "/")
+
                 # Make path relative to repo_path
-                try:
-                    rel_path = Path(path).relative_to(repo_path)
-                except ValueError:
-                    rel_path = Path(path)
+                repo_name = repo_path.name
+                if path.startswith(repo_name + "/"):
+                    # Path includes repo folder name, strip it
+                    rel_path = Path(path[len(repo_name) + 1:])
+                else:
+                    try:
+                        rel_path = Path(path).relative_to(repo_path)
+                    except ValueError:
+                        rel_path = Path(path)
 
                 start_line = finding.get("start", {}).get("line", 1)
                 end_line = finding.get("end", {}).get("line", start_line)
