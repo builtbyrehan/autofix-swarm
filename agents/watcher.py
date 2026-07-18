@@ -551,7 +551,7 @@ class Watcher:
             result = subprocess.run(
                 ["semgrep", "--version"],
                 capture_output=True,
-                timeout=10,
+                timeout=30,
                 check=False,
             )
             return result.returncode == 0
