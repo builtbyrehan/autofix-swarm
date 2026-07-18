@@ -470,19 +470,27 @@ class Watcher:
             if not isinstance(item, dict):
                 continue
 
-            # Validate required fields
-            if not all(k in item for k in ("line_range", "description", "severity", "confidence")):
+            # Validate required fields (model may return "line" or "line_range")
+            if not all(k in item for k in ("description", "severity")):
                 continue
 
-            line_range = item.get("line_range", {})
-            if not isinstance(line_range, dict):
+            # Handle both "line_range": {"start": N, "end": N} and "line": N
+            line_range = item.get("line_range")
+            if isinstance(line_range, dict):
+                start = line_range.get("start", 1)
+                end = line_range.get("end", start)
+            elif "line" in item:
+                start = item["line"]
+                end = start
+            else:
                 continue
-
-            start = line_range.get("start", 1)
-            end = line_range.get("end", start)
 
             if not isinstance(start, int) or not isinstance(end, int):
-                continue
+                try:
+                    start = int(start)
+                    end = int(end)
+                except (ValueError, TypeError):
+                    continue
             if start < 1 or end < start:
                 continue
 
@@ -490,9 +498,13 @@ class Watcher:
             if severity not in ("critical", "high", "medium", "low"):
                 severity = "medium"
 
-            confidence = item.get("confidence", 0.7)
+            # Handle confidence (may not always be provided)
+            confidence = item.get("confidence", 0.75)
             if not isinstance(confidence, (int, float)):
-                confidence = 0.7
+                try:
+                    confidence = float(confidence)
+                except (ValueError, TypeError):
+                    confidence = 0.75
             confidence = max(0.0, min(1.0, float(confidence)))
 
             description = str(item.get("description", "")).strip()
