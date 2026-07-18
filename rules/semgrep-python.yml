@@ -1,0 +1,55 @@
+rules:
+  - id: autofix.python.sql.fstring-query
+    languages: [python]
+    message: SQL query text is constructed with an f-string before execution; bind values as parameters instead.
+    severity: ERROR
+    metadata:
+      confidence: HIGH
+      category: security
+    patterns:
+      - pattern: $QUERY = f"..."
+      - pattern-inside: |
+          def $FUNCTION(...):
+            ...
+            $QUERY = f"..."
+            ...
+            $CONNECTION.execute($QUERY)
+
+  - id: autofix.python.hardcoded-secret
+    languages: [python]
+    message: A credential-like value is hardcoded in source; load it from protected configuration instead.
+    severity: ERROR
+    metadata:
+      confidence: HIGH
+      category: security
+    patterns:
+      - pattern: $NAME = "..."
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: (?i).*(secret|token|password|api[_-]?key).*
+
+  - id: autofix.python.range-drops-final-item
+    languages: [python]
+    message: range(len(collection) - 1) omits the final collection item and is usually an off-by-one bug.
+    severity: WARNING
+    metadata:
+      confidence: HIGH
+      category: correctness
+    pattern-either:
+      - pattern: range(len($COLLECTION) - 1)
+      - pattern: range(0, len($COLLECTION) - 1)
+
+  - id: autofix.python.normalized-value-ignored
+    languages: [python]
+    message: A normalized value is computed but the unnormalized input is returned instead.
+    severity: INFO
+    metadata:
+      confidence: HIGH
+      category: maintainability
+    patterns:
+      - pattern: |
+          $NORMALIZED = $VALUE.strip().upper()
+          return f"...{$VALUE}..."
+      - metavariable-regex:
+          metavariable: $NORMALIZED
+          regex: (?i)^normalized_.*

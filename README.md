@@ -6,7 +6,7 @@
 > **Runtime roles:** Codex writes and applies fixes; GPT-5.6 detects issues missed by static analysis and produces the final review explanation
 > **Deadline:** July 21, 2026, 5:00 PM PT (July 22, 2026, 5:00 AM PKT)
 > **Scope status (v3):** Devpost requirements verified July 17, 2026. GitHub PR integration and the retry loop remain outside v1. Lightweight sandboxing is the baseline. **Never cut:** GPT-5.6 usage, the eval harness, or sandboxing of some form.
-> **Implementation status:** Day 1 foundation in progress. The seeded repository and deterministic eval foundation are the first build milestone.
+> **Implementation status:** Day 1 deterministic Watcher checkpoint met: 4 of 7 planted bugs detected (57.1%) with zero false positives. Codex and GPT-5.6 integrations remain unverified.
 
 ### Verified Build Week delivery requirements
 
@@ -53,7 +53,7 @@ Three agents, each with one clear job. No agent does another agent's job. State 
 
 ### Agent 1 — Watcher (bug detection)
 - **Job:** Scan the target repo and produce a ranked list of real issues (not noise).
-- **Tools:** Semgrep (static analysis, free/open-source) for known patterns + GPT-5.6 through the OpenAI Responses API for issues static analysis misses (unclear logic, naming, authorization, and security smells). The cost-conscious default is `gpt-5.6-luna`; the model is configurable through `OPENAI_MODEL`.
+- **Tools:** Semgrep (static analysis, free/open-source) for known patterns + GPT-5.6 through the OpenAI Responses API for issues static analysis misses (unclear logic, naming, authorization, and security smells). A clearly labeled built-in AST fallback runs the same four local rules when Semgrep execution is blocked; it reports `builtin-static`, never `semgrep`. GPT-5.6 remains disabled until real API access exists.
 - **Output:** `issues.json` — a list of `{id, file, line_range, description, severity, confidence}`.
 - **Explicit non-goal:** Watcher never writes fixes. It only detects and describes.
 
@@ -78,7 +78,7 @@ Three agents, each with one clear job. No agent does another agent's job. State 
 | Fix-writing agent | **OpenAI Codex** | Codex is the only component allowed to write or apply fixes. Codex-credit access must be verified before integration |
 | Bug-detection LLM | **GPT-5.6 via OpenAI Responses API** | `gpt-5.6-luna` by default for cost control; used only after deterministic Semgrep results are available |
 | Explanation LLM | **GPT-5.6 via OpenAI Responses API** | Explains the diff and test evidence; never writes or revises code |
-| Static analysis | **Semgrep** (open-source, free, CLI) | Run via subprocess from Python backend |
+| Static analysis | **Semgrep CE 1.170.0** + built-in AST fallback | Native and Docker backends are supported; Windows `auto` uses the local fallback to avoid host-policy and registry dependencies |
 | Orchestration | **LangGraph** (Python) | Explicit state machine: Watcher → Codex → Reviewer, linear (no retry loop in v1) |
 | Backend/API | **FastAPI** (Python) | Exposes `/scan`, `/fix`, `/verify`, `/results` endpoints |
 | Sandbox | **Lightweight isolation** (restricted subprocess / `firejail` / minimal container) | No network access, writes confined to a scratch copy of the repo. Full Docker is a stretch upgrade only, not the v1 baseline — see Section 10a |
@@ -128,31 +128,37 @@ Implemented and locally validated:
 - `eval/seeded_bugs.json` records ground truth without exposing it inside the target source.
 - `eval/schemas/` defines the Watcher, Reviewer, and ground-truth JSON contracts.
 - `eval/run_eval.py` validates ground truth and deterministically scores detection rate, fix success, false positives, and recorded latency.
+- `agents/watcher.py` emits the documented issue schema and supports `builtin`, `native`, and no-network/read-only `docker` static-analysis backends.
+- The built-in Watcher currently detects 4 of 7 planted bugs (57.1%) with zero false positives, meeting the Day 1 checkpoint.
 
-Not yet implemented: Watcher, Codex Fixer, Reviewer, LangGraph orchestration, sandbox, FastAPI backend, SQLite logging, React dashboard, and cached demo replay.
+Not yet implemented: GPT-5.6 Watcher gap analysis, Codex Fixer, Reviewer, LangGraph orchestration, sandbox, FastAPI backend, SQLite logging, React dashboard, and cached demo replay.
 
 Current local prerequisites and blockers:
 
 - Python 3.11+ is supported; the current development environment has Python 3.14.3.
-- Semgrep and pytest are not installed in the current environment. The seeded tests are also compatible with standard-library `unittest`.
+- Semgrep CE 1.170.0 and pytest 9.1.1 are installed in the ignored `.venv` development environment.
+- Windows Application Control blocks the native Semgrep engine on this host, and Docker Hub did not deliver the pinned image. Windows `auto` therefore uses the honest built-in fallback; native and Docker remain explicit backends for compatible environments.
 - `OPENAI_API_KEY` is not configured, so GPT-5.6 access is not verified.
 - The packaged Codex executable is discoverable, but the current shell is denied permission to execute it; Codex runtime integration remains unverified.
 
-Foundation checks:
+Local setup and foundation checks:
 
 ```powershell
-python eval/run_eval.py --validate-only
-python -m unittest discover -s eval/tests -p "test_*.py"
-python -m unittest discover -s seeded_repo/tests -p "test_*.py"
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[watcher,test]"
+.\.venv\Scripts\python.exe -m agents.watcher seeded_repo --output artifacts/issues.json
+.\.venv\Scripts\python.exe eval/run_eval.py --issues artifacts/issues.json
+.\.venv\Scripts\python.exe -m pytest
+.\.venv\Scripts\python.exe -m pytest seeded_repo/tests
 ```
 
-The final command is expected to report six failing contracts before remediation; those failures are the evaluation baseline.
+The final command is expected to report six failing contracts before remediation; those failures are the evaluation baseline. Use `--backend native` for native Semgrep or `--backend docker` for the pinned `semgrep/semgrep:1.170.0` container. The Docker backend uses a read-only source mount and no container network.
 
 ---
 
 ## 5. Seeded Bug Repo & Eval Harness (do not skip — this is the differentiator)
 
-Before building the agents, create a small demo repo (`seeded_repo/`) with **6–8 intentionally planted bugs** of known types (reduced from a larger set — enough to be a credible sample without burning a full build day on repo-seeding):
+The current demo repo (`seeded_repo/`) contains **7 intentionally planted bugs** of known types:
 - 2 security issues (e.g. SQL injection via string formatting, hardcoded secret)
 - 2 logic bugs (off-by-one, wrong comparison operator)
 - 2 code-quality issues (unused variable, missing error handling)
@@ -186,9 +192,9 @@ Each step should work standalone before moving on. Do not start the next day's w
 
 ### Day 1 (today) — De-risk + foundations
 1. **First hour, before anything else:** confirm Codex API/CLI access with one trivial call (read a file, propose a fix), and confirm GPT-5.6 Responses API access with one structured-output call. These are the two highest-uncertainty dependencies in the whole project — resolve them before writing agent logic. Repository and eval fixtures may be built while access is pending, but model integrations must not be presented as verified.
-2. Create `seeded_repo/` (6–8 planted bugs) + `eval/seeded_bugs.json` ground truth.
-3. Build `agents/watcher.py` — get it correctly finding the planted bugs in isolation.
-- **Checkpoint:** Watcher runs standalone and its output matches expectations against `seeded_bugs.json` for at least half the planted bugs.
+2. [x] Create `seeded_repo/` (7 planted bugs) + `eval/seeded_bugs.json` ground truth.
+3. [x] Build the deterministic path in `agents/watcher.py` and measure it in isolation.
+- **Checkpoint status:** Met for the deterministic path — 4/7 detected (57.1%), zero false positives. GPT-5.6 and Codex access checks remain blocked and must not be represented as completed.
 
 ### Day 2 — Fix + verify, agent by agent
 4. Set up `sandbox/isolate.py` — lightweight isolation wrapper, verified to block network access and writes outside the scratch copy.

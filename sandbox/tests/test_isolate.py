@@ -135,6 +135,7 @@ class TestConfigValidation:
     def test_default_config_is_valid(self) -> None:
         c = SandboxConfig()
         assert c.container_image == "python:3.11-slim"
+        assert c.container_user == "1000:1000"
         assert c.timeout_seconds > 0
         assert c.process_limit > 0
 
@@ -153,6 +154,11 @@ class TestConfigValidation:
             SandboxConfig(process_limit=-1)
         with pytest.raises(ValueError):
             SandboxConfig(max_output_bytes=0)
+
+    @pytest.mark.parametrize("container_user", ["0", "0:0", "root", "1000:root"])
+    def test_root_or_invalid_container_user_rejected(self, container_user: str) -> None:
+        with pytest.raises(ValueError):
+            SandboxConfig(container_user=container_user)
 
     def test_exclude_patterns_default_present(self) -> None:
         c = SandboxConfig()
@@ -434,6 +440,7 @@ class TestDockerCommandConstruction:
                 "--read-only",
                 "--cap-drop ALL",
                 "--security-opt no-new-privileges",
+                "--user 1000:1000",
                 "--pids-limit",
                 "--memory",
                 "--cpus",
@@ -524,6 +531,13 @@ class TestDockerFilesystemIsolation:
         with SandboxWorkspace(seeded_repo) as ws:
             result = ws.run(
                 ["python", "-c", "import pathlib;print(pathlib.Path('/workspace/README.md').read_text()[:5])"]
+            )
+            assert result.success, result.stderr
+
+    def test_container_runs_as_non_root(self, fake_repo: Path) -> None:
+        with SandboxWorkspace(fake_repo) as ws:
+            result = ws.run(
+                ["python", "-c", "import os; assert os.geteuid() != 0; print(os.geteuid())"]
             )
             assert result.success, result.stderr
 

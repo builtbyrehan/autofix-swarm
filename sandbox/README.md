@@ -115,6 +115,8 @@ with SandboxWorkspace("seeded_repo", config=config) as sandbox:
 ## Filesystem policy
 
 - Container root: `--read-only`.
+- Container processes run as the non-root numeric user `1000:1000` by
+  default (`--user`); root and named-user values are rejected by configuration.
 - Only writable surfaces: the mounted `/workspace` (the temp copy) and a small
   `/tmp` tmpfs.
 - Never mounted: the original repo, the workspace *root*, the user's home
@@ -235,9 +237,8 @@ The list must be empty.
   allowlist above.
 - No retry loop (consistent with the project's v1 scope) — a failed/timeout run
   is reported, not retried, by this component.
-- The container runs as the image's default user (root inside the namespace)
-  but with all capabilities dropped, a read-only root, no network, and tight
-  pid/memory limits. Hardening to a non-root uid is a future improvement; see
-  the handoff notes.
+- The container uses a fixed non-root numeric uid/gid (`1000:1000`) and does
+  not use Docker user-namespace remapping. Stronger kernel isolation such as
+  gVisor or Kata remains outside the prototype scope.
 - Diff generation is textual (`difflib`), not `git`-based by default, to avoid
   requiring `git` inside the container.

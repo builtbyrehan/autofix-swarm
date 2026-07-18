@@ -24,6 +24,7 @@ from __future__ import annotations
 import dataclasses
 import fnmatch
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -46,6 +47,7 @@ __all__ = [
     "CommandValidationError",
     "InvalidRepositoryError",
     "DEFAULT_CONTAINER_IMAGE",
+    "DEFAULT_CONTAINER_USER",
 ]
 
 
@@ -56,6 +58,12 @@ __all__ = [
 #: Default container image. Kept configurable on :class:`SandboxConfig` so the
 #: image name is never hardcoded throughout the implementation.
 DEFAULT_CONTAINER_IMAGE: Final[str] = "python:3.11-slim"
+
+#: Unprivileged numeric uid/gid used for every container command. Numeric IDs
+#: work even when the selected minimal image does not define a named user.
+DEFAULT_CONTAINER_USER: Final[str] = "1000:1000"
+
+_NON_ROOT_USER_PATTERN: Final[re.Pattern[str]] = re.compile(r"^[1-9]\d*(?::[0-9]+)?$")
 
 #: Where the temporary repository is mounted inside the container.
 WORKSPACE_MOUNT: Final[str] = "/workspace"
@@ -218,6 +226,7 @@ class SandboxConfig:
 
     Attributes:
         container_image: OCI image used for the disposable container.
+        container_user: Non-root numeric uid, optionally followed by a gid.
         timeout_seconds: Wall-clock limit per command before it is killed.
         memory_limit: Docker ``--memory`` value, e.g. ``"512m"``.
         cpu_limit: Docker ``--cpus`` value, e.g. ``"1.0"``.
@@ -227,6 +236,7 @@ class SandboxConfig:
     """
 
     container_image: str = DEFAULT_CONTAINER_IMAGE
+    container_user: str = DEFAULT_CONTAINER_USER
     timeout_seconds: int = 60
     memory_limit: str = "512m"
     cpu_limit: str = "1.0"
@@ -244,6 +254,14 @@ class SandboxConfig:
             # Reject image names without a tag so the runtime is pinned.
             raise ValueError(
                 f"container_image must include an explicit tag: {self.container_image!r}"
+            )
+        if (
+            not isinstance(self.container_user, str)
+            or not _NON_ROOT_USER_PATTERN.fullmatch(self.container_user)
+        ):
+            raise ValueError(
+                "container_user must be a non-root numeric uid, optionally followed "
+                "by ':gid' (for example '1000:1000')"
             )
         if not isinstance(self.timeout_seconds, int) or self.timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be a positive integer")
@@ -266,6 +284,7 @@ class SandboxConfig:
         return (
             "SandboxConfig("
             f"container_image={self.container_image!r}, "
+            f"container_user={self.container_user!r}, "
             f"timeout_seconds={self.timeout_seconds}, "
             f"memory_limit={self.memory_limit!r}, "
             f"cpu_limit={self.cpu_limit!r}, "
@@ -742,6 +761,7 @@ class SandboxWorkspace:
             "--read-only",
             "--cap-drop", "ALL",
             "--security-opt", "no-new-privileges",
+            "--user", cfg.container_user,
             "--pids-limit", str(cfg.process_limit),
             "--memory", str(cfg.memory_limit),
             "--cpus", str(cfg.cpu_limit),

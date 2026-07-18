@@ -9,6 +9,7 @@ for the guarantees, limitations, and how the Fixer/Reviewer use this module.
 
 from sandbox.isolate import (
     DEFAULT_CONTAINER_IMAGE,
+    DEFAULT_CONTAINER_USER,
     CommandValidationError,
     DockerUnavailableError,
     InvalidRepositoryError,
@@ -29,4 +30,5 @@ __all__ = [
     "CommandValidationError",
     "InvalidRepositoryError",
     "DEFAULT_CONTAINER_IMAGE",
+    "DEFAULT_CONTAINER_USER",
 ]
