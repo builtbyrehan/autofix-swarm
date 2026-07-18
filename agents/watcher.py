@@ -194,11 +194,18 @@ class Watcher:
         start = time.monotonic()
 
         try:
+            # Find semgrep executable
+            import sys
+            semgrep_cmd = "semgrep"
+            semgrep_path = Path(sys.prefix) / "Scripts" / "semgrep.exe"
+            if semgrep_path.exists():
+                semgrep_cmd = str(semgrep_path)
+
             # Run Semgrep with JSON output
             # Using auto config for common vulnerabilities
             result = subprocess.run(
                 [
-                    "semgrep",
+                    semgrep_cmd,
                     "--config=auto",
                     "--json",
                     "--quiet",
@@ -547,6 +554,7 @@ class Watcher:
     @staticmethod
     def _check_semgrep_available() -> bool:
         """Check if Semgrep is installed and available."""
+        # Try direct semgrep command first
         try:
             result = subprocess.run(
                 ["semgrep", "--version"],
@@ -554,6 +562,24 @@ class Watcher:
                 timeout=30,
                 check=False,
             )
-            return result.returncode == 0
+            if result.returncode == 0:
+                return True
         except (FileNotFoundError, subprocess.SubprocessError, OSError):
-            return False
+            pass
+
+        # Try via Python executable in venv
+        try:
+            import sys
+            semgrep_path = Path(sys.prefix) / "Scripts" / "semgrep.exe"
+            if semgrep_path.exists():
+                result = subprocess.run(
+                    [str(semgrep_path), "--version"],
+                    capture_output=True,
+                    timeout=30,
+                    check=False,
+                )
+                return result.returncode == 0
+        except (FileNotFoundError, subprocess.SubprocessError, OSError):
+            pass
+
+        return False
