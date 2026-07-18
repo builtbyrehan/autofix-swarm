@@ -55,7 +55,8 @@ class ReviewerConfig:
     test_command: list[str] | None = None
     timeout_seconds: int = 180
     openai_api_key: Optional[str] = None
-    openai_model: str = "gpt-5.6-luna"
+    openai_base_url: str = "https://openrouter.ai/api/v1"
+    openai_model: str = "nvidia/nemotron-ultra-253b"
 
 
 @dataclass
@@ -294,7 +295,10 @@ class Reviewer:
         """
         import openai
 
-        client = openai.OpenAI(api_key=self.config.openai_api_key)
+        client = openai.OpenAI(
+            api_key=self.config.openai_api_key,
+            base_url=self.config.openai_base_url,
+        )
 
         # Truncate test output to keep prompt manageable
         test_output_truncated = test_output[:2000] if len(test_output) > 2000 else test_output

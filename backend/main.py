@@ -148,6 +148,7 @@ async def scan_repository(request: ScanRequest):
             use_gpt=request.use_gpt,
             max_issues=request.max_issues,
             openai_api_key=settings.openai_api_key,
+            openai_base_url=settings.openai_base_url,
             openai_model=settings.openai_model,
         )
         watcher = Watcher(config=watcher_config)
@@ -302,6 +303,7 @@ async def verify_fix(request: VerifyRequest):
 
         reviewer_config = ReviewerConfig(
             openai_api_key=settings.openai_api_key,
+            openai_base_url=settings.openai_base_url,
             openai_model=settings.openai_model,
         )
         reviewer = Reviewer(config=reviewer_config)
@@ -393,6 +395,7 @@ async def run_pipeline(request: PipelineRunRequest):
             auto_fix_threshold=request.auto_fix_threshold,
             artifacts_dir=settings.artifacts_dir,
             openai_api_key=settings.openai_api_key,
+            openai_base_url=settings.openai_base_url,
             openai_model=settings.openai_model,
         )
 

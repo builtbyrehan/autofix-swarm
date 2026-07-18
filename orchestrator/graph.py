@@ -40,7 +40,8 @@ class PipelineConfig:
     auto_fix_threshold: float = 0.7
     artifacts_dir: str | Path = "artifacts"
     openai_api_key: Optional[str] = None
-    openai_model: str = "gpt-5.6-luna"
+    openai_base_url: str = "https://openrouter.ai/api/v1"
+    openai_model: str = "nvidia/nemotron-ultra-253b"
 
 
 @dataclass
@@ -184,6 +185,7 @@ class Pipeline:
                 use_gpt=state.config.use_gpt,
                 max_issues=state.config.max_issues,
                 openai_api_key=state.config.openai_api_key,
+                openai_base_url=state.config.openai_base_url,
                 openai_model=state.config.openai_model,
             )
             self.watcher = Watcher(config=watcher_config)
@@ -253,6 +255,7 @@ class Pipeline:
         if self.reviewer is None:
             reviewer_config = ReviewerConfig(
                 openai_api_key=state.config.openai_api_key,
+                openai_base_url=state.config.openai_base_url,
                 openai_model=state.config.openai_model,
             )
             self.reviewer = Reviewer(config=reviewer_config)

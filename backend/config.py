@@ -19,9 +19,10 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # OpenAI API Configuration
+    # OpenAI API Configuration (works with OpenRouter, NVIDIA, etc.)
     openai_api_key: str = ""
-    openai_model: str = "gpt-5.6-luna"  # Default cost-conscious model
+    openai_base_url: str = "https://openrouter.ai/api/v1"  # OpenRouter default
+    openai_model: str = "nvidia/nemotron-ultra-253b"  # Free model via OpenRouter
     openai_timeout: int = 120  # seconds
 
     # Codex Configuration

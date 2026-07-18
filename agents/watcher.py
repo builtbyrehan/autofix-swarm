@@ -64,7 +64,8 @@ class WatcherConfig:
     use_gpt: bool = True
     max_issues: Optional[int] = None
     openai_api_key: Optional[str] = None
-    openai_model: str = "gpt-5.6-luna"
+    openai_base_url: str = "https://openrouter.ai/api/v1"
+    openai_model: str = "nvidia/nemotron-ultra-253b"
     timeout_seconds: int = 300
 
 
@@ -313,7 +314,10 @@ class Watcher:
         try:
             import openai
 
-            client = openai.OpenAI(api_key=self.config.openai_api_key)
+            client = openai.OpenAI(
+                api_key=self.config.openai_api_key,
+                base_url=self.config.openai_base_url,
+            )
 
             # Process files in batches to stay within context limits
             for file_path in source_files:
