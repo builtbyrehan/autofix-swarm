@@ -8,3 +8,8 @@ __pycache__/
 htmlcov/
 artifacts/
 logs/*.db
+.mimocode/
+_distill_query*.py
+autofix_swarm.egg-info/
+.venv/
+venv/
