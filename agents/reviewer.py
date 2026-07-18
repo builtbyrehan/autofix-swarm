@@ -56,7 +56,7 @@ class ReviewerConfig:
     timeout_seconds: int = 180
     openai_api_key: Optional[str] = None
     openai_base_url: str = "https://openrouter.ai/api/v1"
-    openai_model: str = "nvidia/nemotron-ultra-253b"
+    openai_model: str = "nvidia/nemotron-3-ultra-550b-a55b:free"
 
 
 @dataclass

@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     # OpenAI API Configuration (works with OpenRouter, NVIDIA, etc.)
     openai_api_key: str = ""
     openai_base_url: str = "https://openrouter.ai/api/v1"  # OpenRouter default
-    openai_model: str = "nvidia/nemotron-ultra-253b"  # Free model via OpenRouter
+    openai_model: str = "nvidia/nemotron-3-ultra-550b-a55b:free"  # Free model via OpenRouter
     openai_timeout: int = 120  # seconds
 
     # Codex Configuration
