@@ -518,7 +518,7 @@ async def run_pipeline(request: PipelineRunRequest):
 
         return PipelineRunResponse(
             run_id=run_id,
-            status=PipelineStatus(state.status.upper()),
+            status=PipelineStatus(state.status),
             issues_found=state.issues_found,
             fixes_attempted=state.fixes_attempted,
             fixes_succeeded=state.fixes_succeeded,
