@@ -460,6 +460,52 @@ async def run_pipeline(request: PipelineRunRequest):
 
         duration = time.monotonic() - start_time
 
+        # Auto-cache successful runs for demo fallback
+        if state.status == "completed" and state.issues_found > 0:
+            try:
+                from backend.demo_cache import demo_cache
+
+                issues_data = [i.to_dict() for i in (state.watcher_result.issues if state.watcher_result else [])]
+                fixes_data = [
+                    {
+                        "fix_id": str(uuid.uuid4()),
+                        "issue_id": f.issue_id,
+                        "status": f.status,
+                        "codex_live": f.codex_live,
+                        "summary": f.summary,
+                        "changed_files": f.changed_files,
+                        "duration_seconds": f.duration_seconds,
+                    }
+                    for f in state.fix_results
+                ]
+                verdicts_data = [
+                    {
+                        "verdict_id": str(uuid.uuid4()),
+                        "issue_id": r.verdict.issue_id,
+                        "tests_passed": r.verdict.tests_passed,
+                        "explanation": r.verdict.explanation,
+                        "confidence": r.verdict.confidence,
+                    }
+                    for r in state.review_results
+                ]
+
+                pipeline_state = {
+                    "run_id": run_id,
+                    "status": state.status,
+                    "issues_found": state.issues_found,
+                    "fixes_attempted": state.fixes_attempted,
+                    "fixes_succeeded": state.fixes_succeeded,
+                    "verifications_passed": state.verifications_passed,
+                    "total_duration_seconds": duration,
+                    "issues": issues_data,
+                    "fixes": fixes_data,
+                    "verdicts": verdicts_data,
+                }
+                demo_cache.save_run(run_id, pipeline_state, settings.artifacts_dir)
+            except Exception:
+                # Cache failure is non-critical
+                pass
+
         return PipelineRunResponse(
             run_id=run_id,
             status=PipelineStatus(state.status.upper()),
@@ -601,6 +647,113 @@ async def get_verdicts(run_id: str):
     """
     verdicts = db.get_verdicts(run_id)
     return {"run_id": run_id, "verdicts": verdicts, "count": len(verdicts)}
+
+
+# ---------------------------------------------------------------------------
+# Demo Cache Endpoints
+# ---------------------------------------------------------------------------
+
+
+@app.get("/demo/cached", tags=["Demo"])
+async def get_cached_demo():
+    """Get the latest cached demo run for fallback replay.
+
+    Returns:
+        Cached pipeline data ready for dashboard display, or 404 if none cached
+    """
+    from backend.demo_cache import demo_cache
+
+    demo_data = demo_cache.get_demo_data()
+    if not demo_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No cached demo runs available",
+        )
+    return demo_data
+
+
+@app.get("/demo/cached/list", tags=["Demo"])
+async def list_cached_demos():
+    """List all cached demo runs.
+
+    Returns:
+        List of cached run metadata
+    """
+    from backend.demo_cache import demo_cache
+
+    runs = demo_cache.list_runs()
+    return {"runs": runs, "count": len(runs)}
+
+
+@app.post("/demo/cache/{run_id}", tags=["Demo"])
+async def cache_pipeline_run(run_id: str):
+    """Cache a completed pipeline run for demo fallback.
+
+    Args:
+        run_id: The run_id from a completed pipeline execution
+
+    Returns:
+        Confirmation with cache location
+    """
+    from backend.demo_cache import demo_cache
+
+    # Fetch run from database
+    run_data = db.get_pipeline_run(run_id)
+    if not run_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Pipeline run not found: {run_id}",
+        )
+
+    # Assemble full state
+    issues = db.get_issues(run_id)
+    fixes = db.get_fixes(run_id)
+    verdicts = db.get_verdicts(run_id)
+
+    pipeline_state = {
+        "run_id": run_id,
+        "status": run_data.get("status", "completed"),
+        "issues_found": run_data.get("issues_found", len(issues)),
+        "fixes_attempted": run_data.get("fixes_attempted", len(fixes)),
+        "fixes_succeeded": run_data.get("fixes_succeeded", 0),
+        "verifications_passed": run_data.get("verifications_passed", 0),
+        "total_duration_seconds": run_data.get("total_duration_seconds", 0),
+        "issues": issues,
+        "fixes": fixes,
+        "verdicts": verdicts,
+        "cached_at": datetime.utcnow().isoformat(),
+    }
+
+    cache_path = demo_cache.save_run(run_id, pipeline_state, settings.artifacts_dir)
+
+    return {
+        "status": "cached",
+        "run_id": run_id,
+        "cache_path": cache_path,
+        "message": f"Run {run_id} cached for demo fallback",
+    }
+
+
+@app.delete("/demo/cache/{run_id}", tags=["Demo"])
+async def delete_cached_demo(run_id: str):
+    """Delete a cached demo run.
+
+    Args:
+        run_id: Run identifier to delete from cache
+
+    Returns:
+        Deletion confirmation
+    """
+    from backend.demo_cache import demo_cache
+
+    deleted = demo_cache.delete_run(run_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Cached run not found: {run_id}",
+        )
+
+    return {"status": "deleted", "run_id": run_id}
 
 
 @app.exception_handler(Exception)

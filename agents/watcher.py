@@ -277,6 +277,10 @@ class Watcher:
     ) -> list[Issue]:
         """Run GPT-5.6 gap analysis for issues Semgrep missed.
 
+        Scans all Python source files and asks GPT-5.6 to detect semantic
+        issues that static analysis typically misses: unclear logic, naming
+        problems, authorization flaws, and other code smells.
+
         Args:
             repo_path: Path to repository
             existing_issues: Issues already found by Semgrep
@@ -290,14 +294,212 @@ class Watcher:
         if not self.config.openai_api_key:
             raise GPTUnavailableError("OpenAI API key not configured")
 
-        # For v1: Return empty list (GPT integration is complex)
-        # TODO: Implement GPT-5.6 semantic analysis
-        # This would involve:
-        # 1. Reading source files
-        # 2. Constructing prompts for GPT-5.6
-        # 3. Parsing GPT responses
-        # 4. Filtering out duplicates of Semgrep findings
-        return []
+        issues: list[Issue] = []
+        start = time.monotonic()
+
+        # Collect all Python source files (exclude tests, __pycache__, .env)
+        source_files = self._collect_source_files(repo_path)
+
+        if not source_files:
+            return issues
+
+        # Build a snapshot of already-detected locations to avoid duplicates
+        semgrep_locations: set[tuple[str, int, int]] = set()
+        for issue in existing_issues:
+            semgrep_locations.add(
+                (issue.file, issue.line_range["start"], issue.line_range["end"])
+            )
+
+        try:
+            import openai
+
+            client = openai.OpenAI(api_key=self.config.openai_api_key)
+
+            # Process files in batches to stay within context limits
+            for file_path in source_files:
+                rel_path = str(file_path.relative_to(repo_path))
+                try:
+                    source_code = file_path.read_text(encoding="utf-8")
+                except (OSError, UnicodeDecodeError):
+                    continue
+
+                if not source_code.strip():
+                    continue
+
+                # Build the analysis prompt
+                prompt = self._build_gpt_prompt(source_code, rel_path, semgrep_locations)
+
+                # Call GPT-5.6
+                response = client.chat.completions.create(
+                    model=self.config.openai_model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "You are a senior security and code quality reviewer. "
+                                "Analyze the provided Python source code and identify real bugs, "
+                                "security vulnerabilities, logic errors, and code quality issues. "
+                                "Focus on issues that static analysis tools typically miss: "
+                                "authorization flaws, business logic errors, semantic issues, "
+                                "and implicit assumptions.\n\n"
+                                "Return ONLY a JSON array of issues. Each issue must have:\n"
+                                "- file: the file path (string)\n"
+                                "- line_range: {\"start\": N, \"end\": N} (1-indexed, inclusive)\n"
+                                "- description: clear explanation of the issue (string)\n"
+                                "- severity: one of \"critical\", \"high\", \"medium\", \"low\"\n"
+                                "- confidence: a float between 0.0 and 1.0\n\n"
+                                "Return an empty array [] if no issues are found. "
+                                "Do NOT include issues that would be caught by basic linting "
+                                "(unused imports, missing type hints, etc.)."
+                            ),
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    temperature=0.1,
+                    max_tokens=2048,
+                    response_format={"type": "json_object"},
+                )
+
+                content = response.choices[0].message.content
+                if not content:
+                    continue
+
+                # Parse GPT response
+                gpt_issues = self._parse_gpt_response(content, rel_path)
+
+                # Filter out duplicates of Semgrep findings
+                for issue in gpt_issues:
+                    loc = (issue.file, issue.line_range["start"], issue.line_range["end"])
+                    if loc not in semgrep_locations:
+                        semgrep_locations.add(loc)
+                        issues.append(issue)
+
+        except ImportError:
+            raise GPTUnavailableError("openai package not installed")
+        except Exception as e:
+            # Log but don't fail — GPT analysis is additive
+            pass
+
+        return issues
+
+    def _collect_source_files(self, repo_path: Path) -> list[Path]:
+        """Collect all Python source files from the repository.
+
+        Excludes test files, __pycache__, .env, and other non-source directories.
+        """
+        exclude_dirs = {
+            "__pycache__", ".git", ".env", ".venv", "venv",
+            "node_modules", "tests", "test_", ".pytest_cache",
+            "artifacts", "logs", ".mypy_cache",
+        }
+
+        source_files: list[Path] = []
+        for py_file in repo_path.rglob("*.py"):
+            # Skip excluded directories
+            if any(part in exclude_dirs for part in py_file.parts):
+                continue
+            # Skip test files
+            if py_file.name.startswith("test_") or py_file.name == "conftest.py":
+                continue
+            source_files.append(py_file)
+
+        return sorted(source_files)
+
+    def _build_gpt_prompt(
+        self,
+        source_code: str,
+        file_path: str,
+        existing_locations: set[tuple[str, int, int]],
+    ) -> str:
+        """Build a prompt for GPT-5.6 semantic analysis."""
+        lines = source_code.splitlines()
+        numbered_code = "\n".join(
+            f"{i + 1:3d} | {line}" for i, line in enumerate(lines)
+        )
+
+        return (
+            f"Analyze the following Python source file for bugs, security "
+            f"vulnerabilities, logic errors, and code quality issues.\n\n"
+            f"File: {file_path}\n\n"
+            f"```python\n{numbered_code}\n```\n\n"
+            f"Identify issues that a static analysis tool would likely miss. "
+            f"Focus on:\n"
+            f"- Security vulnerabilities (injection, hardcoded secrets, auth flaws)\n"
+            f"- Logic errors (off-by-one, wrong comparisons, missing edge cases)\n"
+            f"- Business logic issues (incorrect authorization, broken invariants)\n"
+            f"- Code quality (unused variables, missing error handling, unclear intent)\n\n"
+            f"Return a JSON object with an \"issues\" key containing the array."
+        )
+
+    def _parse_gpt_response(
+        self, response_text: str, file_path: str
+    ) -> list[Issue]:
+        """Parse GPT-5.6 JSON response into Issue objects."""
+        issues: list[Issue] = []
+
+        try:
+            data = json.loads(response_text)
+        except json.JSONDecodeError:
+            return issues
+
+        # Handle both {"issues": [...]} and bare [...]
+        if isinstance(data, dict):
+            items = data.get("issues", [])
+        elif isinstance(data, list):
+            items = data
+        else:
+            return issues
+
+        if not isinstance(items, list):
+            return issues
+
+        for idx, item in enumerate(items):
+            if not isinstance(item, dict):
+                continue
+
+            # Validate required fields
+            if not all(k in item for k in ("line_range", "description", "severity", "confidence")):
+                continue
+
+            line_range = item.get("line_range", {})
+            if not isinstance(line_range, dict):
+                continue
+
+            start = line_range.get("start", 1)
+            end = line_range.get("end", start)
+
+            if not isinstance(start, int) or not isinstance(end, int):
+                continue
+            if start < 1 or end < start:
+                continue
+
+            severity = str(item.get("severity", "medium")).lower()
+            if severity not in ("critical", "high", "medium", "low"):
+                severity = "medium"
+
+            confidence = item.get("confidence", 0.7)
+            if not isinstance(confidence, (int, float)):
+                confidence = 0.7
+            confidence = max(0.0, min(1.0, float(confidence)))
+
+            description = str(item.get("description", "")).strip()
+            if not description:
+                continue
+
+            issues.append(
+                Issue(
+                    id=f"gpt_{idx + 1:03d}",
+                    file=file_path,
+                    line_range={"start": start, "end": end},
+                    description=description,
+                    severity=severity,
+                    confidence=confidence,
+                    detectors=["gpt-5.6"],
+                    latency_ms=None,
+                )
+            )
+
+        return issues
 
     def _rank_issues(self, issues: list[Issue]) -> list[Issue]:
         """Rank issues by severity and confidence.

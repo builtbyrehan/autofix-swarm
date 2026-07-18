@@ -222,6 +222,10 @@ class Reviewer:
     ) -> tuple[str, float]:
         """Generate human-readable explanation using GPT-5.6.
 
+        Uses GPT-5.6 to produce a plain-English explanation of the fix,
+        grounded in the diff and test evidence. Falls back to deterministic
+        explanations when GPT is unavailable.
+
         Args:
             issue_id: Issue identifier
             issue_description: Original issue description
@@ -232,10 +236,17 @@ class Reviewer:
         Returns:
             Tuple of (explanation, confidence)
         """
-        # For v1: Generate deterministic explanation without GPT
-        # TODO: Implement GPT-5.6 explanation generation
-        # This would involve constructing a prompt and calling OpenAI API
+        # Try GPT-5.6 explanation first
+        if self.config.openai_api_key:
+            try:
+                return self._gpt_explain(
+                    issue_id, issue_description, diff, tests_passed, test_output
+                )
+            except Exception:
+                # Fall through to deterministic explanation
+                pass
 
+        # Deterministic fallback (no GPT available)
         if tests_passed:
             explanation = (
                 f"Fix for issue {issue_id} successfully applied. "
@@ -256,6 +267,90 @@ class Reviewer:
             explanation += "Manual review is recommended before merging."
             confidence = 0.5
 
+        return explanation, confidence
+
+    def _gpt_explain(
+        self,
+        issue_id: str,
+        issue_description: str,
+        diff: str,
+        tests_passed: bool,
+        test_output: str,
+    ) -> tuple[str, float]:
+        """Call GPT-5.6 to generate a plain-English fix explanation.
+
+        Args:
+            issue_id: Issue identifier
+            issue_description: Original issue description
+            diff: The code changes made
+            tests_passed: Whether tests passed
+            test_output: Test execution output (truncated for context)
+
+        Returns:
+            Tuple of (explanation, confidence)
+
+        Raises:
+            Exception: If GPT call fails (caller should fall back gracefully)
+        """
+        import openai
+
+        client = openai.OpenAI(api_key=self.config.openai_api_key)
+
+        # Truncate test output to keep prompt manageable
+        test_output_truncated = test_output[:2000] if len(test_output) > 2000 else test_output
+        diff_truncated = diff[:3000] if len(diff) > 3000 else diff
+
+        prompt = (
+            f"You are reviewing a code fix for an automated bug remediation system.\n\n"
+            f"## Issue Details\n"
+            f"- Issue ID: {issue_id}\n"
+            f"- Description: {issue_description or 'Not provided'}\n\n"
+            f"## Code Changes (diff)\n"
+            f"```diff\n{diff_truncated}\n```\n\n"
+            f"## Test Results\n"
+            f"- Tests passed: {tests_passed}\n"
+            f"```\n{test_output_truncated}\n```\n\n"
+            f"## Your Task\n"
+            f"Write a concise, plain-English explanation (2-4 sentences) of:\n"
+            f"1. What the issue was\n"
+            f"2. What the fix does\n"
+            f"3. Whether the fix is trustworthy (based on test results)\n\n"
+            f"Return a JSON object with:\n"
+            f"- \"explanation\": your plain-English explanation\n"
+            f"- \"confidence\": a float 0.0-1.0 indicating how confident you are in this explanation"
+        )
+
+        response = client.chat.completions.create(
+            model=self.config.openai_model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a senior software engineer explaining code fixes to a "
+                        "non-technical stakeholder. Be clear, concise, and grounded in "
+                        "evidence (the diff and test results). Do not speculate beyond "
+                        "what the code changes show."
+                    ),
+                },
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.2,
+            max_tokens=512,
+            response_format={"type": "json_object"},
+        )
+
+        content = response.choices[0].message.content
+        if not content:
+            raise ValueError("Empty GPT response")
+
+        data = json.loads(content)
+        explanation = str(data.get("explanation", "")).strip()
+        confidence = float(data.get("confidence", 0.8))
+
+        if not explanation:
+            raise ValueError("Empty explanation from GPT")
+
+        confidence = max(0.0, min(1.0, confidence))
         return explanation, confidence
 
     @staticmethod

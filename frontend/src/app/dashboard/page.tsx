@@ -50,8 +50,11 @@ export default function Dashboard() {
   const [verdicts, setVerdicts] = useState<Verdict[]>([]);
 
   const fetchLatestResults = async () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/results/latest`);
+      // Try live results first
+      const res = await fetch(`${apiUrl}/results/latest`);
       if (res.ok) {
         const data = await res.json();
         setLatestRun(data);
@@ -59,9 +62,9 @@ export default function Dashboard() {
         // Fetch associated issues, fixes, verdicts
         if (data.run_id) {
           const [issuesRes, fixesRes, verdictsRes] = await Promise.all([
-            fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/issues/${data.run_id}`),
-            fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/fixes/${data.run_id}`),
-            fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/verdicts/${data.run_id}`)
+            fetch(`${apiUrl}/issues/${data.run_id}`),
+            fetch(`${apiUrl}/fixes/${data.run_id}`),
+            fetch(`${apiUrl}/verdicts/${data.run_id}`)
           ]);
           
           if (issuesRes.ok) {
@@ -77,9 +80,24 @@ export default function Dashboard() {
             setVerdicts(verdictsData.verdicts || []);
           }
         }
+        return;
       }
     } catch (error) {
-      console.error("Failed to fetch results:", error);
+      console.error("Failed to fetch live results:", error);
+    }
+    
+    // Fallback to cached demo data
+    try {
+      const cachedRes = await fetch(`${apiUrl}/demo/cached`);
+      if (cachedRes.ok) {
+        const cachedData = await cachedRes.json();
+        setLatestRun(cachedData.run);
+        setIssues(cachedData.issues || []);
+        setFixes(cachedData.fixes || []);
+        setVerdicts(cachedData.verdicts || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch cached demo:", error);
     }
   };
 
