@@ -8,6 +8,7 @@ normal runtime mode.
 from __future__ import annotations
 
 import json
+import io
 import os
 import subprocess
 import sys
@@ -109,6 +110,22 @@ def temp_artifacts() -> Path:
         yield Path(td)
 
 
+@pytest.fixture
+def no_docker_workspace(monkeypatch, tmp_path: Path):
+    """Stub only the workspace lifecycle for pre-execution failure tests."""
+    from agents import fixer_codex
+
+    class _WorkspaceStub:
+        def __init__(self, _repo_path, *, config) -> None:
+            self.workspace_path = tmp_path / "workspace"
+            self.workspace_path.mkdir()
+
+        def close(self) -> None:
+            return None
+
+    monkeypatch.setattr(fixer_codex, "SandboxWorkspace", _WorkspaceStub)
+
+
 # ===================================================================
 # 1. Issue validation tests (no Docker needed)
 # ===================================================================
@@ -162,7 +179,7 @@ class TestValidateIssue:
     def test_path_outside_repo(self, valid_issue_dict, seeded_repo):
         from agents.fixer_codex import _validate_issue, InvalidIssueError
         valid_issue_dict["file"] = "../../../windows/system32/drivers/etc/hosts"
-        with pytest.raises(InvalidIssueError, match="outside the repository"):
+        with pytest.raises(InvalidIssueError, match="traversal|outside the repository"):
             _validate_issue(valid_issue_dict, seeded_repo)
 
     def test_nonexistent_file(self, valid_issue_dict, seeded_repo):
@@ -354,11 +371,25 @@ class TestCodexCliRunner:
             runner.run("test", cwd=Path("."))
 
     def test_bounded_output(self):
-        """Runner should respect max_output_bytes."""
-        from agents.fixer_codex import CodexCliRunner, CodexUnavailableError
-        runner = CodexCliRunner(executable=Path("nonexistent-codex.exe"))
-        with pytest.raises(CodexUnavailableError):
-            runner.run("test", cwd=Path("."), max_output_bytes=100)
+        """Captured output is bounded before it is retained in memory."""
+        from agents.fixer_codex import _BoundedOutput
+
+        captured = _BoundedOutput(io.BytesIO(b"x" * 4096), max_bytes=100)
+        captured.start()
+        captured.join()
+
+        assert captured.truncated
+        assert len(captured.value().encode("utf-8")) <= 100
+
+    def test_bounded_output_handles_tiny_limit(self):
+        from agents.fixer_codex import _BoundedOutput
+
+        captured = _BoundedOutput(io.BytesIO(b"x" * 64), max_bytes=8)
+        captured.start()
+        captured.join()
+
+        assert captured.truncated
+        assert len(captured.value().encode("utf-8")) <= 8
 
     def test_blocked_detection(self):
         from agents.fixer_codex import CodexCliRunner
@@ -466,7 +497,7 @@ class TestCodexFixer:
         assert not result.codex_live
         assert result.artifact_path is None
 
-    def test_blocked_402(self, seeded_repo, temp_artifacts):
+    def test_blocked_402(self, seeded_repo, temp_artifacts, no_docker_workspace):
         """Simulated 402 deactivated_workspace should produce blocked."""
         from agents.fixer_codex import CodexFixer
         blocked_runner = _TestFakeRunner(blocked=True)
@@ -485,7 +516,7 @@ class TestCodexFixer:
         assert result.artifact_path is None
         assert "blocked" in result.failure_reason.lower()
 
-    def test_timed_out(self, seeded_repo, temp_artifacts):
+    def test_timed_out(self, seeded_repo, temp_artifacts, no_docker_workspace):
         from agents.fixer_codex import CodexFixer
         timeout_runner = _TestFakeRunner(timed_out=True)
         fixer = CodexFixer(runner=timeout_runner)
@@ -498,10 +529,10 @@ class TestCodexFixer:
             "confidence": 0.9,
         }
         result = fixer.fix(issue, repo_path=seeded_repo, artifacts_dir=temp_artifacts)
-        assert result.status in ("blocked", "failed")
+        assert result.status == "failed"
         assert result.artifact_path is None
 
-    def test_nonzero_exit(self, seeded_repo, temp_artifacts):
+    def test_nonzero_exit(self, seeded_repo, temp_artifacts, no_docker_workspace):
         from agents.fixer_codex import CodexFixer
         failed_runner = _TestFakeRunner(exit_code=1, stderr="Codex error")
         fixer = CodexFixer(runner=failed_runner)
@@ -516,6 +547,27 @@ class TestCodexFixer:
         result = fixer.fix(issue, repo_path=seeded_repo, artifacts_dir=temp_artifacts)
         assert result.status == "failed"
         assert result.artifact_path is None
+
+    def test_non_live_runner_cannot_claim_success(
+        self, seeded_repo, temp_artifacts, no_docker_workspace
+    ):
+        from agents.fixer_codex import CodexFixer
+
+        fixer = CodexFixer(runner=_TestFakeRunner())
+        issue = {
+            "id": "bug_001",
+            "file": "src/autofix_seed/payments.py",
+            "line_range": {"start": 6, "end": 7},
+            "description": "test",
+            "severity": "high",
+            "confidence": 0.9,
+        }
+        result = fixer.fix(issue, repo_path=seeded_repo, artifacts_dir=temp_artifacts)
+
+        assert result.status == "blocked"
+        assert not result.codex_live
+        assert result.artifact_path is None
+        assert "non-live" in result.failure_reason
 
     @pytest.mark.skipif(
         not __import__("subprocess").run(["docker", "info"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15).returncode == 0,
@@ -550,7 +602,7 @@ class TestCodexFixer:
                     target.write_text(content, encoding="utf-8")
                 return CodexRunnerResult(
                     exit_code=0, stdout="fix applied", stderr="",
-                    timed_out=False, blocked=False,
+                    timed_out=False, blocked=False, live=True,
                 )
 
         fixer = CodexFixer(runner=_ApplyFixRunner())
@@ -619,7 +671,7 @@ class TestCodexFixer:
                     second.write_text(content2, encoding="utf-8")
                 return CodexRunnerResult(
                     exit_code=0, stdout="", stderr="",
-                    timed_out=False, blocked=False,
+                    timed_out=False, blocked=False, live=True,
                 )
 
         fixer = CodexFixer(runner=_MultiFileFixRunner())
@@ -654,13 +706,16 @@ class TestCodexFixer:
             def run(self, prompt, *, cwd, timeout_seconds=120, max_output_bytes=524288):
                 self.last_prompt = prompt
                 self.last_cwd = cwd
+                target = Path(cwd) / "src/autofix_seed/payments.py"
+                content = target.read_text(encoding="utf-8")
+                target.write_text(content + "\n# unexpected source change\n", encoding="utf-8")
                 test_file = Path(cwd) / "tests/test_payments.py"
                 if test_file.exists():
                     content = test_file.read_text(encoding="utf-8")
-                    test_file.write_text(content, encoding="utf-8")
+                    test_file.write_text(content + "\n# unexpected test change\n", encoding="utf-8")
                 return CodexRunnerResult(
                     exit_code=0, stdout="", stderr="",
-                    timed_out=False, blocked=False,
+                    timed_out=False, blocked=False, live=True,
                 )
 
         fixer = CodexFixer(runner=_TestFileFixRunner())
@@ -722,7 +777,7 @@ class TestCodexFixer:
                     target.write_text(content, encoding="utf-8")
                 return CodexRunnerResult(
                     exit_code=0, stdout="", stderr="",
-                    timed_out=False, blocked=False,
+                    timed_out=False, blocked=False, live=True,
                 )
 
         fixer = CodexFixer(runner=_SimpleRunner())

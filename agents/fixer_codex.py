@@ -15,6 +15,7 @@ import os
 import re
 import shutil
 import subprocess
+import threading
 import time
 from collections.abc import Sequence
 from pathlib import Path
@@ -196,6 +197,8 @@ class CodexRunnerResult:
         stderr: Captured stderr text.
         timed_out: True if the invocation exceeded the timeout.
         blocked: True if the invocation was blocked (auth, rate-limit, etc.).
+        live: True only when the production Codex CLI completed successfully.
+        truncated: True when either captured stream exceeded its size limit.
     """
 
     exit_code: int
@@ -203,6 +206,8 @@ class CodexRunnerResult:
     stderr: str
     timed_out: bool
     blocked: bool
+    live: bool = False
+    truncated: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -228,6 +233,58 @@ def _find_codex_executable() -> Optional[Path]:
 def _sanitize(text: str) -> str:
     """Remove potential credential patterns from captured text."""
     return _TOKEN_PATTERN.sub("<sanitized>", text)
+
+
+class _BoundedOutput:
+    """Drain a byte stream without retaining more than ``max_bytes`` in memory."""
+
+    _MARKER: Final[bytes] = b"\n...[codex: output truncated at size limit]\n"
+
+    def __init__(self, stream: Any, max_bytes: int) -> None:
+        self._stream = stream
+        self._max_bytes = max_bytes
+        self._chunks: list[bytes] = []
+        self._size = 0
+        self.truncated = False
+        self._thread: Optional[threading.Thread] = None
+
+    def start(self) -> None:
+        self._thread = threading.Thread(target=self._drain, daemon=True)
+        self._thread.start()
+
+    def _drain(self) -> None:
+        marker_length = len(self._MARKER)
+        try:
+            while chunk := self._stream.read(4096):
+                remaining = self._max_bytes - self._size
+                if remaining <= marker_length:
+                    self._mark_truncated()
+                    continue
+                take = min(len(chunk), remaining - marker_length)
+                if take:
+                    self._chunks.append(chunk[:take])
+                    self._size += take
+                if take < len(chunk) and not self.truncated:
+                    self._mark_truncated()
+        except (OSError, ValueError):
+            return
+
+    def _mark_truncated(self) -> None:
+        if self.truncated:
+            return
+        available = max(0, self._max_bytes - self._size)
+        if available:
+            marker = self._MARKER[:available]
+            self._chunks.append(marker)
+            self._size += len(marker)
+        self.truncated = True
+
+    def join(self) -> None:
+        if self._thread is not None:
+            self._thread.join(timeout=10)
+
+    def value(self) -> str:
+        return b"".join(self._chunks).decode("utf-8", errors="replace")
 
 
 class CodexCliRunner:
@@ -282,9 +339,7 @@ class CodexCliRunner:
             "--skip-git-repo-check",
         ]
 
-        start = time.monotonic()
         timed_out = False
-        blocked = False
 
         try:
             proc = subprocess.Popen(
@@ -299,23 +354,31 @@ class CodexCliRunner:
                 f"failed to start codex process: {exc}"
             ) from exc
 
-        prompt_bytes = prompt.encode("utf-8")
+        stdout_pipe = _BoundedOutput(proc.stdout, max_output_bytes)
+        stderr_pipe = _BoundedOutput(proc.stderr, max_output_bytes)
+        stdout_pipe.start()
+        stderr_pipe.start()
+
         try:
-            stdout_data, stderr_data = proc.communicate(
-                input=prompt_bytes, timeout=timeout_seconds
-            )
+            if proc.stdin is not None:
+                proc.stdin.write(prompt.encode("utf-8"))
+                proc.stdin.close()
+            exit_code = proc.wait(timeout=timeout_seconds)
+        except (BrokenPipeError, OSError):
+            proc.kill()
+            exit_code = proc.wait(timeout=10)
         except subprocess.TimeoutExpired:
             timed_out = True
             proc.kill()
-            stdout_data, stderr_data = proc.communicate(timeout=10)
-        exit_code = proc.returncode if proc.returncode is not None else -1
+            exit_code = proc.wait(timeout=10)
 
-        duration = time.monotonic() - start
-        stdout_text = stdout_data.decode("utf-8", errors="replace")[:max_output_bytes]
-        stderr_text = stderr_data.decode("utf-8", errors="replace")[:max_output_bytes]
+        stdout_pipe.join()
+        stderr_pipe.join()
+        stdout_text = stdout_pipe.value()
+        stderr_text = stderr_pipe.value()
+        blocked = self._detect_blocked(stdout_text, stderr_text, exit_code)
 
-        if not blocked:
-            blocked = self._detect_blocked(stdout_text, stderr_text, exit_code)
+        live = exit_code == 0 and not timed_out and not blocked
 
         return CodexRunnerResult(
             exit_code=exit_code,
@@ -323,6 +386,8 @@ class CodexCliRunner:
             stderr=_sanitize(stderr_text),
             timed_out=timed_out,
             blocked=blocked,
+            live=live,
+            truncated=stdout_pipe.truncated or stderr_pipe.truncated,
         )
 
     @staticmethod
@@ -369,20 +434,20 @@ def _validate_issue(issue: Any, repo_path: Path) -> FixRequest:
     if missing:
         raise InvalidIssueError(f"missing required fields: {sorted(missing)}")
 
-    issue_id = str(issue["id"])
-    if not issue_id or not isinstance(issue_id, str):
+    issue_id = issue["id"]
+    if not isinstance(issue_id, str) or not issue_id:
         raise InvalidIssueError("id must be a non-empty string")
     if not _SAFE_ID_PATTERN.match(issue_id):
         raise InvalidIssueError(
             f"unsafe issue id {issue_id!r}: must match {_SAFE_ID_PATTERN.pattern}"
         )
 
-    rel_path = str(issue["file"])
-    if not rel_path:
+    rel_path = issue["file"]
+    if not isinstance(rel_path, str) or not rel_path:
         raise InvalidIssueError("file must be a non-empty string")
     if os.path.isabs(rel_path):
         raise InvalidIssueError(f"absolute file path not allowed: {rel_path!r}")
-    if ".." in rel_path.split(os.sep):
+    if ".." in re.split(r"[\\/]", rel_path):
         raise InvalidIssueError(f"path traversal detected in file: {rel_path!r}")
 
     resolved = (repo_path / rel_path).resolve()
@@ -401,15 +466,18 @@ def _validate_issue(issue: Any, repo_path: Path) -> FixRequest:
         )
 
     lr = issue["line_range"]
-    if isinstance(lr, dict):
-        start = int(lr.get("start", 0))
-        end = int(lr.get("end", 0))
-    elif isinstance(lr, (list, tuple)) and len(lr) == 2:
-        start, end = int(lr[0]), int(lr[1])
-    else:
-        raise InvalidIssueError(
-            "line_range must be a dict with start/end or a 2-element list/tuple"
-        )
+    try:
+        if isinstance(lr, dict):
+            start = int(lr.get("start", 0))
+            end = int(lr.get("end", 0))
+        elif isinstance(lr, (list, tuple)) and len(lr) == 2:
+            start, end = int(lr[0]), int(lr[1])
+        else:
+            raise InvalidIssueError(
+                "line_range must be a dict with start/end or a 2-element list/tuple"
+            )
+    except (TypeError, ValueError) as exc:
+        raise InvalidIssueError("line_range values must be integers") from exc
     if start < 1:
         raise InvalidIssueError("line_range start must be >= 1")
     if end < start:
@@ -422,13 +490,13 @@ def _validate_issue(issue: Any, repo_path: Path) -> FixRequest:
         )
 
     confidence = issue["confidence"]
-    if not isinstance(confidence, (int, float)):
+    if isinstance(confidence, bool) or not isinstance(confidence, (int, float)):
         raise InvalidIssueError("confidence must be numeric")
     if confidence < 0 or confidence > 1:
         raise InvalidIssueError("confidence must be in range [0, 1]")
 
-    description = str(issue["description"])
-    if not description:
+    description = issue["description"]
+    if not isinstance(description, str) or not description:
         raise InvalidIssueError("description must be non-empty")
 
     return FixRequest(
@@ -734,8 +802,21 @@ class CodexFixer:
                     failure_reason=_sanitize(runner_result.stderr[:500]),
                 )
 
-            # Codex completed without error — this was a live invocation.
-            codex_live = True
+            # A zero exit code alone is not enough to claim a live Codex fix.
+            # Only the production runner can attest to a completed live call.
+            codex_live = runner_result.live
+            if not codex_live:
+                return FixResult(
+                    issue_id=request.id,
+                    status="blocked",
+                    codex_live=False,
+                    summary="Codex runner did not verify a live invocation",
+                    changed_files=[],
+                    diff="",
+                    artifact_path=None,
+                    duration_seconds=time.monotonic() - start,
+                    failure_reason="non-live runner output cannot produce a fix artifact",
+                )
 
             # --- 6. Compute diff from workspace ---
             diff = sandbox.create_diff()
