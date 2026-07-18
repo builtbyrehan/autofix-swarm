@@ -151,8 +151,15 @@ async def scan_repository(request: ScanRequest):
             openai_base_url=settings.openai_base_url,
             openai_model=settings.openai_model,
         )
+        print(f"[SCAN] Config: semgrep={request.use_semgrep}, gpt={request.use_gpt}, model={settings.openai_model}")
+        print(f"[SCAN] API key set: {bool(settings.openai_api_key)}")
+        print(f"[SCAN] Repo path: {repo_path}")
+
         watcher = Watcher(config=watcher_config)
+        print(f"[SCAN] Semgrep available: {watcher._check_semgrep_available()}")
+
         result = watcher.scan(repo_path)
+        print(f"[SCAN] Result: semgrep={result.semgrep_count}, gpt={result.gpt_count}, total={result.total_count}")
 
         # Save issues to database
         for issue in result.issues:
