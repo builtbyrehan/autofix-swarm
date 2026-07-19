@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import {
   ArrowRight, ArrowUpRight, ChevronDown, Eye, Wrench, ShieldCheck,
-  Bug, CheckCircle2, Clock, Play, Menu, X, Activity
+  Menu, X
 } from "lucide-react";
 
 const STAGES = [

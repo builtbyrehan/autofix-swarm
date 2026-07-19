@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Generator, Optional
 
 from backend.config import settings
-from backend.models import AgentLog, AgentStatus
+from backend.models import AgentStatus
 
 
 class Database:

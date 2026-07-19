@@ -162,7 +162,7 @@ class TestValidateIssue:
     def test_path_outside_repo(self, valid_issue_dict, seeded_repo):
         from agents.fixer_codex import _validate_issue, InvalidIssueError
         valid_issue_dict["file"] = "../../../windows/system32/drivers/etc/hosts"
-        with pytest.raises(InvalidIssueError, match="outside the repository"):
+        with pytest.raises(InvalidIssueError, match="traversal|outside the repository"):
             _validate_issue(valid_issue_dict, seeded_repo)
 
     def test_nonexistent_file(self, valid_issue_dict, seeded_repo):

@@ -14,7 +14,7 @@ import {
 } from "@/components/results";
 import { Button, Skeleton } from "@/components/ui";
 import { DURATION, ease, EASE } from "@/lib/easing";
-import type { PipelineResult, PipelineRun } from "@/types";
+import type { Issue, PipelineResult, PipelineRun } from "@/types";
 
 async function fetcher(key: string): Promise<PipelineResult | null> {
   const runId = key.replace("result-", "");
@@ -49,6 +49,15 @@ export default function RunResultsPage() {
     swrConfig
   );
 
+  const { data: issuesData } = useSWR<{ issues: Issue[] }>(
+    runId && data?.scan_result ? `issues-${runId}` : null,
+    async () => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/issues/${runId}`);
+      if (!res.ok) return { issues: [] };
+      return res.json();
+    }
+  );
+
   if (isLoading) {
     return (
       <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6">
@@ -77,7 +86,9 @@ export default function RunResultsPage() {
       }
     : null;
 
-  const issues = data?.scan_result ? mockIssues : [];
+  const issues = data?.scan_result
+    ? (issuesData?.issues?.length ? issuesData.issues : mockIssues)
+    : [];
   const fixes = data?.fix_results ?? [];
   const verdicts = data?.verify_results ?? [];
 

@@ -216,6 +216,11 @@ class PipelineResult(BaseModel):
 
     run_id: str
     status: PipelineStatus
+    issues_found: int = 0
+    fixes_attempted: int = 0
+    fixes_succeeded: int = 0
+    verifications_passed: int = 0
+    message: str = ""
     scan_result: Optional[ScanResponse] = None
     fix_results: list[FixResponse] = Field(default_factory=list)
     verify_results: list[VerifyResponse] = Field(default_factory=list)
@@ -223,6 +228,7 @@ class PipelineResult(BaseModel):
     total_duration_seconds: float
     started_at: datetime
     completed_at: Optional[datetime] = None
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class HealthResponse(BaseModel):

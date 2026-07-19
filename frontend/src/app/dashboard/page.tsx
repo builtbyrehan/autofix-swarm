@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import {
-  Terminal, Bug, Wrench, CheckCircle2, XCircle, Clock, ArrowLeft,
+  Bug, Wrench, CheckCircle2, XCircle, Clock, ArrowLeft,
   RefreshCw, Play, TrendingUp, AlertTriangle, Code, Activity, Shield,
   Target, Upload, FileText, Copy, Trash2, ChevronDown
 } from "lucide-react";
@@ -86,7 +86,7 @@ export default function Dashboard() {
         const body = await res.json().catch(() => ({ detail: res.statusText }));
         setError(body.detail || `Request failed (${res.status})`);
       }
-    } catch (e) {
+    } catch {
       setError("Network error. Is the backend running?");
     } finally { setIsRunning(false); }
   };
@@ -471,7 +471,7 @@ export default function Dashboard() {
             </h3>
             <div className="grid gap-4 md:grid-cols-3">
               {[
-                { icon: Terminal, title: "View Logs", desc: "Check detailed execution logs" },
+                { icon: Activity, title: "View Logs", desc: "Check detailed execution logs" },
                 { icon: RefreshCw, title: "Re-run Failed", desc: "Retry unsuccessful fixes" },
                 { icon: Copy, title: "Paste Code", desc: "Submit code snippets for analysis", onClick: () => { setShowPaste(true); setShowUpload(false); } },
               ].map((action) => (

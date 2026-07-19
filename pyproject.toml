@@ -25,7 +25,7 @@ test = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = ["seeded_repo/src", "agents"]
+pythonpath = ["seeded_repo/src", "agents", "sandbox"]
 testpaths = ["seeded_repo/tests", "agents/tests", "backend/tests", "eval/tests", "sandbox/tests"]
 addopts = "-q"
 markers = [

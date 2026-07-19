@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, AsyncGenerator, Optional
 
-from fastapi import FastAPI, File, HTTPException, UploadFile, status
+from fastapi import Body, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -172,7 +172,7 @@ async def scan_repository(request: ScanRequest):
         print(f"[SCAN] Repo path: {repo_path}")
 
         watcher = Watcher(config=watcher_config)
-        print(f"[SCAN] Semgrep available: {watcher._check_semgrep_available()}")
+        print(f"[SCAN] Semgrep available: {Watcher._check_semgrep_available()}")
 
         result = watcher.scan(repo_path)
         print(f"[SCAN] Result: semgrep={result.semgrep_count}, gpt={result.gpt_count}, total={result.total_count}")
@@ -252,7 +252,7 @@ async def fix_issue(request: FixRequest):
 
         result = fixer.fix(
             issue=issue_data,
-            repo_path=settings.target_repo_path,
+            repo_path=_get_repo_path(),
             artifacts_dir=settings.artifacts_dir,
         )
 
@@ -345,7 +345,7 @@ async def verify_fix(request: VerifyRequest):
 
         result = reviewer.verify(
             issue_id=issue_id,
-            repo_path=settings.target_repo_path,
+            repo_path=_get_repo_path(),
             diff=diff_text,
             issue_description=issue_description,
         )
@@ -576,7 +576,7 @@ async def run_pipeline(request: PipelineRunRequest):
 
 
 @app.post("/run/custom", response_model=PipelineRunResponse, tags=["Pipeline"])
-async def run_custom_pipeline(request_body: dict[str, Any] = None):
+async def run_custom_pipeline(request_body: Optional[dict[str, Any]] = Body(default=None)):
     """Run pipeline against custom (pasted) code.
 
     Accepts code content, writes it to a temporary directory, then
@@ -641,10 +641,13 @@ async def run_custom_pipeline(request_body: dict[str, Any] = None):
         # Run watcher scan (only Semgrep for Python, GPT for all)
         from agents.watcher import Watcher, WatcherConfig
 
+        raw_max = request_body.get("max_issues")
+        max_issues = int(raw_max) if raw_max is not None else None
+
         watcher_config = WatcherConfig(
             use_semgrep=use_semgrep and language == "python",
             use_gpt=use_gpt,
-            max_issues=request_body.get("max_issues"),
+            max_issues=max_issues,
             openai_api_key=settings.openai_api_key,
             openai_base_url=settings.openai_base_url,
             openai_model=settings.openai_model,
@@ -966,11 +969,13 @@ async def get_latest_results():
             detail="No pipeline runs found",
         )
 
-    # Parse and return full result
-    # TODO: Implement full result assembly from database
     return PipelineResult(
         run_id=run_data["run_id"],
         status=PipelineStatus(run_data["status"]),
+        issues_found=run_data.get("issues_found") or 0,
+        fixes_attempted=run_data.get("fixes_attempted") or 0,
+        fixes_succeeded=run_data.get("fixes_succeeded") or 0,
+        verifications_passed=run_data.get("verifications_passed") or 0,
         total_duration_seconds=run_data.get("total_duration_seconds") or 0.0,
         started_at=datetime.fromisoformat(run_data["started_at"]),
         completed_at=(
@@ -1002,12 +1007,14 @@ async def get_results(run_id: str):
             detail=f"Pipeline run not found: {run_id}",
         )
 
-    # Parse and return full result
-    # TODO: Implement full result assembly from database
     return PipelineResult(
         run_id=run_data["run_id"],
         status=PipelineStatus(run_data["status"]),
-        total_duration_seconds=run_data.get("total_duration_seconds", 0.0),
+        issues_found=run_data.get("issues_found") or 0,
+        fixes_attempted=run_data.get("fixes_attempted") or 0,
+        fixes_succeeded=run_data.get("fixes_succeeded") or 0,
+        verifications_passed=run_data.get("verifications_passed") or 0,
+        total_duration_seconds=run_data.get("total_duration_seconds") or 0.0,
         started_at=datetime.fromisoformat(run_data["started_at"]),
         completed_at=(
             datetime.fromisoformat(run_data["completed_at"])
@@ -1026,11 +1033,27 @@ async def get_issues(run_id: str):
 
     Returns:
         List of issues with details
-
-    Raises:
-        HTTPException: If run_id not found
     """
-    issues = db.get_issues(run_id)
+    import json as _json
+
+    rows = db.get_issues(run_id)
+    issues = []
+    for row in rows:
+        detectors = row.get("detectors", "[]")
+        if isinstance(detectors, str):
+            try:
+                detectors = _json.loads(detectors)
+            except Exception:
+                detectors = []
+        issues.append({
+            "id": row["issue_id"],
+            "file": row["file"],
+            "line_range": {"start": row["line_start"], "end": row["line_end"]},
+            "description": row["description"],
+            "severity": row["severity"],
+            "confidence": row["confidence"],
+            "detectors": detectors,
+        })
     return {"run_id": run_id, "issues": issues, "count": len(issues)}
 
 
@@ -1043,11 +1066,31 @@ async def get_fixes(run_id: str):
 
     Returns:
         List of fixes with status and details
-
-    Raises:
-        HTTPException: If run_id not found
     """
-    fixes = db.get_fixes(run_id)
+    import json as _json
+
+    rows = db.get_fixes(run_id)
+    fixes = []
+    for row in rows:
+        changed_files = row.get("changed_files", "[]")
+        if isinstance(changed_files, str):
+            try:
+                changed_files = _json.loads(changed_files)
+            except Exception:
+                changed_files = []
+        fixes.append({
+            "fix_id": row["fix_id"],
+            "issue_id": row["issue_id"],
+            "status": row["status"],
+            "codex_live": bool(row["codex_live"]),
+            "summary": row["summary"],
+            "changed_files": changed_files,
+            "diff_preview": (row.get("diff_text") or "")[:500] if row.get("diff_text") else "",
+            "artifact_path": row.get("artifact_path"),
+            "duration_seconds": row["duration_seconds"],
+            "failure_reason": row.get("failure_reason", ""),
+            "timestamp": row.get("created_at", ""),
+        })
     return {"run_id": run_id, "fixes": fixes, "count": len(fixes)}
 
 
@@ -1060,11 +1103,21 @@ async def get_verdicts(run_id: str):
 
     Returns:
         List of verdicts with test results and explanations
-
-    Raises:
-        HTTPException: If run_id not found
     """
-    verdicts = db.get_verdicts(run_id)
+    rows = db.get_verdicts(run_id)
+    verdicts = []
+    for row in rows:
+        verdicts.append({
+            "verdict_id": row["verdict_id"],
+            "fix_id": row["fix_id"],
+            "issue_id": row["issue_id"],
+            "status": row["status"],
+            "tests_passed": bool(row["tests_passed"]),
+            "explanation": row["explanation"],
+            "confidence": row["confidence"],
+            "duration_seconds": row["duration_seconds"],
+            "timestamp": row.get("created_at", ""),
+        })
     return {"run_id": run_id, "verdicts": verdicts, "count": len(verdicts)}
 
 

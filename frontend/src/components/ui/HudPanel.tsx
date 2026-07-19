@@ -3,8 +3,9 @@
 import { forwardRef, useCallback, type HTMLAttributes, type MouseEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Tilt3DCard } from "./Tilt3DCard";
+import type { ElevationTier } from "./Elevation";
 
-export type ElevationTier = 0 | 1 | 2 | 3;
+export type { ElevationTier };
 export type GlowState =
   | "none"
   | "cyan"

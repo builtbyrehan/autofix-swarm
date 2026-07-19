@@ -31,7 +31,7 @@ $envFile = Join-Path $RootDir ".env"
 $envExample = Join-Path $RootDir ".env.example"
 if (-not (Test-Path $envFile) -and (Test-Path $envExample)) {
     Copy-Item $envExample $envFile
-    Write-Host "Created $envFile from .env.example — edit OPENAI_API_KEY as needed." -ForegroundColor Yellow
+    Write-Host "Created $envFile from .env.example - edit OPENAI_API_KEY as needed." -ForegroundColor Yellow
 }
 
 $frontendEnv = Join-Path $FrontendDir ".env.local"
@@ -104,14 +104,13 @@ try {
             break
         }
         Start-Sleep -Seconds 2
-        # Show recent output from each job
         foreach ($job in $jobs) {
             $output = Receive-Job $job -Keep | Select-Object -Last 2
             if ($output) { Write-Host $output }
         }
     }
 } finally {
-    Write-Host "`nShutting down services..." -ForegroundColor Yellow
+    Write-Host "Shutting down services..." -ForegroundColor Yellow
     $jobs | Stop-Job -PassThru | Remove-Job
     Write-Host "Done." -ForegroundColor Green
 }

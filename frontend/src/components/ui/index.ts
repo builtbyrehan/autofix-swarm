@@ -1,6 +1,6 @@
 // UI primitives barrel — import from "@/components/ui"
 export { HudPanel } from "./HudPanel";
-export type { HudPanelProps, ElevationTier, GlowState } from "./HudPanel";
+export type { HudPanelProps, GlowState } from "./HudPanel";
 
 export { Tilt3DCard } from "./Tilt3DCard";
 export type { Tilt3DCardProps } from "./Tilt3DCard";
@@ -21,3 +21,6 @@ export { Skeleton } from "./Skeleton";
 export { AnimatedNumber } from "./AnimatedNumber";
 
 export { SeverityBadge } from "./SeverityBadge";
+
+export { getElevationClass, getElevationZ, ELEVATION_CLASS, ELEVATION_BORDER_BRIGHTNESS, ELEVATION_Z } from "./Elevation";
+export type { ElevationTier } from "./Elevation";

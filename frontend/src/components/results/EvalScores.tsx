@@ -10,7 +10,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { HudPanel } from "@/components/ui";
-import { useLatestRun } from "@/hooks/useLatestRun";
 import { mockEvalScores } from "@/lib/mockData";
 import { formatRate } from "@/lib/format";
 import type { EvalScores as EvalScoresType } from "@/types";
@@ -21,9 +20,8 @@ import type { EvalScores as EvalScoresType } from "@/types";
  */
 
 export function EvalScores() {
-  // Reuse the latest run data to derive eval scores
-  const { data } = useLatestRun();
-  const scores: EvalScoresType = mockEvalScores; // Use mock for now
+  // TODO: derive scores from live data when available
+  const scores: EvalScoresType = mockEvalScores;
 
   const chartData = [
     { name: "Detection Rate", value: scores.detection_rate * 100, fill: "hsl(199, 89%, 48%)" },

@@ -24,6 +24,7 @@ const levelColors: Record<string, string> = {
   success: "text-success",
   warn: "text-warning",
   error: "text-error",
+  debug: "text-muted-foreground/70",
 };
 
 const agentLabels: Record<AgentName, string> = {

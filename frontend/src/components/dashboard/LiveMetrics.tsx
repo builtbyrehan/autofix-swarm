@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { HudPanel } from "@/components/ui";
-import { cn } from "@/lib/utils";
 import { DURATION, EASE, ease } from "@/lib/easing";
 import type { PipelineRun } from "@/types";
 
