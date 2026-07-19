@@ -10,4 +10,7 @@ class ConfigError(RuntimeError):
 
 def load_config(path: str | Path) -> dict:
     """Load a JSON configuration file or raise ConfigError."""
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError, PermissionError) as exc:
+        raise ConfigError(f"Failed to load config from {path}: {exc}") from exc

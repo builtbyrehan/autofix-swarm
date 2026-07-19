@@ -345,6 +345,185 @@ class CodexCliRunner:
         return exit_code != 0 and "codex" in combined
 
 
+class OpenRouterRunner:
+    """Runs code fixes via OpenRouter API instead of Codex CLI.
+
+    This runner reads the source file from the workspace, sends it to
+    an LLM via OpenRouter for fixing, and writes the result back.
+    """
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        base_url: str = "https://openrouter.ai/api/v1",
+        model: str = "nvidia/nemotron-3-ultra-550b-a55b:free",
+    ) -> None:
+        self._api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
+        self._base_url = base_url
+        self._model = model
+
+    def is_available(self) -> bool:
+        return bool(self._api_key)
+
+    def run(
+        self,
+        prompt: str,
+        *,
+        cwd: Path,
+        timeout_seconds: int = _CODEX_TIMEOUT_SECONDS,
+        max_output_bytes: int = _CODEX_MAX_OUTPUT_BYTES,
+    ) -> CodexRunnerResult:
+        if not self._api_key:
+            return CodexRunnerResult(
+                exit_code=1,
+                stdout="",
+                stderr="OpenRouter API key not configured",
+                timed_out=False,
+                blocked=True,
+            )
+
+        try:
+            import openai
+        except ImportError:
+            return CodexRunnerResult(
+                exit_code=1,
+                stdout="",
+                stderr="openai package not installed",
+                timed_out=False,
+                blocked=True,
+            )
+
+        # Extract file path from prompt
+        file_match = re.search(r"File:\s*(.+?)(?:\n|$)", prompt)
+        if not file_match:
+            return CodexRunnerResult(
+                exit_code=1,
+                stdout="",
+                stderr="Could not extract file path from prompt",
+                timed_out=False,
+                blocked=False,
+            )
+
+        file_path_str = file_match.group(1).strip()
+        file_path = cwd / file_path_str
+
+        if not file_path.exists():
+            return CodexRunnerResult(
+                exit_code=1,
+                stdout="",
+                stderr=f"File not found: {file_path}",
+                timed_out=False,
+                blocked=False,
+            )
+
+        try:
+            source_code = file_path.read_text(encoding="utf-8")
+        except OSError as exc:
+            return CodexRunnerResult(
+                exit_code=1,
+                stdout="",
+                stderr=f"Failed to read file: {exc}",
+                timed_out=False,
+                blocked=False,
+            )
+
+        # Build the API prompt
+        system_prompt = (
+            "You are a senior Python developer fixing code issues. "
+            "You will receive a Python source file and an issue description. "
+            "Return ONLY the complete fixed file content, no explanations. "
+            "Do NOT include markdown code fences, just the raw Python code."
+        )
+
+        user_prompt = (
+            f"{prompt}\n\n"
+            f"Current source code of {file_path_str}:\n"
+            f"```python\n{source_code}\n```\n\n"
+            f"Return the COMPLETE fixed file content. Only the Python code, nothing else."
+        )
+
+        try:
+            client = openai.OpenAI(
+                api_key=self._api_key,
+                base_url=self._base_url,
+            )
+
+            response = client.chat.completions.create(
+                model=self._model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0.1,
+                max_tokens=4096,
+                timeout=timeout_seconds,
+            )
+
+            content = response.choices[0].message.content
+            if not content:
+                return CodexRunnerResult(
+                    exit_code=1,
+                    stdout="",
+                    stderr="Empty response from OpenRouter API",
+                    timed_out=False,
+                    blocked=False,
+                )
+
+            # Clean up the response - remove markdown fences if present
+            fixed_code = content.strip()
+            if fixed_code.startswith("```python"):
+                fixed_code = fixed_code[9:]
+            elif fixed_code.startswith("```"):
+                fixed_code = fixed_code[3:]
+            if fixed_code.endswith("```"):
+                fixed_code = fixed_code[:-3]
+            fixed_code = fixed_code.strip()
+
+            # Write the fixed code to the workspace
+            file_path.write_text(fixed_code, encoding="utf-8")
+
+            return CodexRunnerResult(
+                exit_code=0,
+                stdout=f"Fixed {file_path_str} via OpenRouter API",
+                stderr="",
+                timed_out=False,
+                blocked=False,
+            )
+
+        except openai.APITimeoutError:
+            return CodexRunnerResult(
+                exit_code=1,
+                stdout="",
+                stderr=f"OpenRouter API timed out after {timeout_seconds}s",
+                timed_out=True,
+                blocked=False,
+            )
+        except openai.RateLimitError as exc:
+            return CodexRunnerResult(
+                exit_code=1,
+                stdout="",
+                stderr=f"Rate limited: {exc}",
+                timed_out=False,
+                blocked=True,
+            )
+        except openai.AuthenticationError as exc:
+            return CodexRunnerResult(
+                exit_code=1,
+                stdout="",
+                stderr=f"Authentication failed: {exc}",
+                timed_out=False,
+                blocked=True,
+            )
+        except Exception as exc:
+            return CodexRunnerResult(
+                exit_code=1,
+                stdout="",
+                stderr=f"OpenRouter API error: {exc}",
+                timed_out=False,
+                blocked=False,
+            )
+
+
 # ---------------------------------------------------------------------------
 # Issue validation
 # ---------------------------------------------------------------------------
@@ -574,8 +753,30 @@ class CodexFixer:
         self,
         runner: Optional[CodexRunner] = None,
         sandbox_config: Optional[SandboxConfig] = None,
+        openai_api_key: Optional[str] = None,
+        openai_base_url: str = "https://openrouter.ai/api/v1",
+        openai_model: str = "nvidia/nemotron-3-ultra-550b-a55b:free",
     ) -> None:
-        self._runner = runner or CodexCliRunner()
+        # Always create both runners for fallback
+        self._codex_runner: Optional[CodexCliRunner] = None
+        codex_runner = CodexCliRunner()
+        if codex_runner.is_available():
+            self._codex_runner = codex_runner
+
+        self._openrouter_runner = OpenRouterRunner(
+            api_key=openai_api_key,
+            base_url=openai_base_url,
+            model=openai_model,
+        )
+
+        # Use OpenRouter as primary if Codex CLI is unavailable
+        if runner is not None:
+            self._runner = runner
+        elif self._codex_runner is not None:
+            self._runner = self._codex_runner
+        else:
+            self._runner = self._openrouter_runner
+
         self._sandbox_config = sandbox_config or SandboxConfig(
             timeout_seconds=_CODEX_TIMEOUT_SECONDS + 30
         )
@@ -681,7 +882,7 @@ class CodexFixer:
                     failure_reason="workspace was not initialized",
                 )
 
-            # --- 5. Build and run Codex prompt ---
+            # --- 5. Build and run prompt ---
             prompt = _build_codex_prompt(request)
 
             runner_result = self._runner.run(
@@ -691,19 +892,37 @@ class CodexFixer:
                 max_output_bytes=_CODEX_MAX_OUTPUT_BYTES,
             )
 
+            # If Codex CLI failed, retry with OpenRouter
+            if runner_result.blocked or runner_result.exit_code != 0:
+                if (
+                    self._codex_runner is not None
+                    and self._runner is self._codex_runner
+                    and self._openrouter_runner.is_available()
+                ):
+                    # Reset workspace for retry
+                    sandbox.close()
+                    sandbox = SandboxWorkspace(repo_path, config=self._sandbox_config)
+                    workspace_path = sandbox.workspace_path
+
+                    runner_result = self._openrouter_runner.run(
+                        prompt,
+                        cwd=workspace_path,
+                        timeout_seconds=_CODEX_TIMEOUT_SECONDS,
+                        max_output_bytes=_CODEX_MAX_OUTPUT_BYTES,
+                    )
+
             if runner_result.blocked:
                 return FixResult(
                     issue_id=request.id,
                     status="blocked",
                     codex_live=False,
-                    summary="Codex invocation was blocked",
+                    summary="All runners blocked",
                     changed_files=[],
                     diff="",
                     artifact_path=None,
                     duration_seconds=time.monotonic() - start,
                     failure_reason=(
-                        "Codex CLI returned a blocked response "
-                        "(auth / rate-limit / deactivated workspace). "
+                        "All fix runners returned blocked responses. "
                         "Resolve access and retry."
                     ),
                 )
