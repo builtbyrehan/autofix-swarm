@@ -163,13 +163,13 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #220901, #2D0A04, #1A0500)' }}>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #000000, #14213D, #000000)' }}>
       {/* Header */}
-      <header className="border-b backdrop-blur-xl sticky top-0 z-50" style={{ borderColor: '#4A1812', background: 'rgba(34, 9, 1, 0.8)' }}>
+      <header className="border-b backdrop-blur-xl sticky top-0 z-50" style={{ borderColor: 'rgba(20, 33, 61, 0.5)', background: 'rgba(20, 33, 61, 0.9)' }}>
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/" className="transition-colors" style={{ color: '#B8B3A8' }} onMouseEnter={(e) => e.currentTarget.style.color = '#E6E1D7'} onMouseLeave={(e) => e.currentTarget.style.color = '#B8B3A8'}>
+              <Link href="/" className="transition-colors" style={{ color: '#E5E5E5' }} onMouseEnter={(e) => e.currentTarget.style.color = '#FFFFFF'} onMouseLeave={(e) => e.currentTarget.style.color = '#E5E5E5'}>
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div className="flex items-center gap-3">
@@ -182,7 +182,7 @@ export default function Dashboard() {
                     className="w-8 h-8"
                   />
                 </div>
-                <h1 className="text-xl font-bold" style={{ color: '#E6E1D7' }}>AutoFix Swarm Dashboard</h1>
+                <h1 className="text-xl font-bold" style={{ color: '#FFFFFF' }}>AutoFix Swarm Dashboard</h1>
               </div>
             </div>
             
@@ -190,9 +190,9 @@ export default function Dashboard() {
               <button
                 onClick={fetchLatestResults}
                 className="p-2 transition-colors"
-                style={{ color: '#B8B3A8' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#E6E1D7'}
-                onMouseLeave={(e) => e.currentTarget.style.color = '#B8B3A8'}
+                style={{ color: '#E5E5E5' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#FFFFFF'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#E5E5E5'}
                 title="Refresh"
               >
                 <RefreshCw className="w-5 h-5" />
@@ -224,56 +224,56 @@ export default function Dashboard() {
         {latestRun && (
           <div className="glass-panel p-6 rounded-xl mb-8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: '#E6E1D7' }}>
-                <Clock className="w-5 h-5" style={{ color: '#F6AA1C' }} />
+              <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: '#FFFFFF' }}>
+                <Clock className="w-5 h-5" style={{ color: '#FCA311' }} />
                 Latest Pipeline Run
               </h2>
-              <span className="px-3 py-1 rounded-full text-xs font-mono border" style={{ background: '#3A3A3A', color: '#B8B3A8', borderColor: '#4A4A4A' }}>
+              <span className="px-3 py-1 rounded-full text-xs font-mono border" style={{ background: 'rgba(20, 33, 61, 0.8)', color: '#E5E5E5', borderColor: 'rgba(252, 163, 17, 0.3)' }}>
                 {latestRun.run_id.slice(0, 8)}
               </span>
             </div>
             
             <div className="grid md:grid-cols-5 gap-4">
-              <div className="p-4 rounded-lg" style={{ background: 'rgba(230, 225, 215, 0.85)' }}>
+              <div className="p-4 rounded-lg" style={{ background: '#E5E5E5' }}>
                 <div className="flex items-center justify-between mb-2">
-                  <Bug className="w-5 h-5" style={{ color: '#6B2D1C' }} />
-                  <span className="text-2xl font-mono font-bold" style={{ color: '#2D0A04' }}>{latestRun.issues_found}</span>
+                  <Bug className="w-5 h-5" style={{ color: '#14213D' }} />
+                  <span className="text-2xl font-mono font-bold" style={{ color: '#000000' }}>{latestRun.issues_found}</span>
                 </div>
-                <p className="text-xs" style={{ color: '#4A1812' }}>Issues Found</p>
+                <p className="text-xs" style={{ color: '#14213D' }}>Issues Found</p>
               </div>
 
-              <div className="p-4 rounded-lg" style={{ background: 'rgba(230, 225, 215, 0.85)' }}>
+              <div className="p-4 rounded-lg" style={{ background: '#E5E5E5' }}>
                 <div className="flex items-center justify-between mb-2">
-                  <Wrench className="w-5 h-5" style={{ color: '#6B2D1C' }} />
-                  <span className="text-2xl font-mono font-bold" style={{ color: '#2D0A04' }}>{latestRun.fixes_attempted}</span>
+                  <Wrench className="w-5 h-5" style={{ color: '#14213D' }} />
+                  <span className="text-2xl font-mono font-bold" style={{ color: '#000000' }}>{latestRun.fixes_attempted}</span>
                 </div>
-                <p className="text-xs" style={{ color: '#4A1812' }}>Fixes Attempted</p>
+                <p className="text-xs" style={{ color: '#14213D' }}>Fixes Attempted</p>
               </div>
 
-              <div className="p-4 rounded-lg" style={{ background: 'rgba(230, 225, 215, 0.85)' }}>
+              <div className="p-4 rounded-lg" style={{ background: '#E5E5E5' }}>
                 <div className="flex items-center justify-between mb-2">
-                  <CheckCircle2 className="w-5 h-5" style={{ color: '#6B2D1C' }} />
-                  <span className="text-2xl font-mono font-bold" style={{ color: '#2D0A04' }}>{latestRun.fixes_succeeded}</span>
+                  <CheckCircle2 className="w-5 h-5" style={{ color: '#14213D' }} />
+                  <span className="text-2xl font-mono font-bold" style={{ color: '#000000' }}>{latestRun.fixes_succeeded}</span>
                 </div>
-                <p className="text-xs" style={{ color: '#4A1812' }}>Fixes Succeeded</p>
+                <p className="text-xs" style={{ color: '#14213D' }}>Fixes Succeeded</p>
               </div>
 
-              <div className="p-4 rounded-lg" style={{ background: 'rgba(230, 225, 215, 0.85)' }}>
+              <div className="p-4 rounded-lg" style={{ background: '#E5E5E5' }}>
                 <div className="flex items-center justify-between mb-2">
-                  <Shield className="w-5 h-5" style={{ color: '#6B2D1C' }} />
-                  <span className="text-2xl font-mono font-bold" style={{ color: '#2D0A04' }}>{latestRun.verifications_passed}</span>
+                  <Shield className="w-5 h-5" style={{ color: '#14213D' }} />
+                  <span className="text-2xl font-mono font-bold" style={{ color: '#000000' }}>{latestRun.verifications_passed}</span>
                 </div>
-                <p className="text-xs" style={{ color: '#4A1812' }}>Tests Passed</p>
+                <p className="text-xs" style={{ color: '#14213D' }}>Tests Passed</p>
               </div>
 
-              <div className="p-4 rounded-lg" style={{ background: 'rgba(230, 225, 215, 0.85)' }}>
+              <div className="p-4 rounded-lg" style={{ background: '#E5E5E5' }}>
                 <div className="flex items-center justify-between mb-2">
-                  <Target className="w-5 h-5" style={{ color: '#6B2D1C' }} />
-                  <span className="text-2xl font-mono font-bold" style={{ color: '#2D0A04' }}>
+                  <Target className="w-5 h-5" style={{ color: '#14213D' }} />
+                  <span className="text-2xl font-mono font-bold" style={{ color: '#000000' }}>
                     {latestRun.total_duration_seconds.toFixed(1)}s
                   </span>
                 </div>
-                <p className="text-xs" style={{ color: '#4A1812' }}>Duration</p>
+                <p className="text-xs" style={{ color: '#14213D' }}>Duration</p>
               </div>
             </div>
           </div>
@@ -282,29 +282,29 @@ export default function Dashboard() {
         {/* Issues List */}
         {issues.length > 0 && (
           <div className="glass-panel p-6 rounded-xl mb-8">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#E6E1D7' }}>
-              <Bug className="w-5 h-5" style={{ color: '#F6AA1C' }} />
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#FFFFFF' }}>
+              <Bug className="w-5 h-5" style={{ color: '#FCA311' }} />
               Detected Issues ({issues.length})
             </h2>
             
             <div className="space-y-3">
               {issues.map((issue) => (
-                <div key={issue.id} className="p-4 rounded-lg border hover:border-opacity-50 transition-colors" style={{ background: 'rgba(230, 225, 215, 0.85)', borderColor: 'rgba(74, 24, 18, 0.3)' }}>
+                <div key={issue.id} className="p-4 rounded-lg border hover:border-opacity-70 transition-colors" style={{ background: '#E5E5E5', borderColor: 'rgba(20, 33, 61, 0.3)' }}>
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-3">
                       <span className={`px-2 py-1 rounded text-xs font-mono border ${getSeverityColor(issue.severity)}`}>
                         {issue.severity.toUpperCase()}
                       </span>
-                      <code className="text-sm px-2 py-0.5 rounded" style={{ color: '#2D0A04', background: 'rgba(107, 45, 28, 0.15)' }}>{issue.file}</code>
-                      <span className="text-xs" style={{ color: '#6B5D52' }}>
+                      <code className="text-sm px-2 py-0.5 rounded" style={{ color: '#000000', background: 'rgba(20, 33, 61, 0.15)' }}>{issue.file}</code>
+                      <span className="text-xs" style={{ color: '#14213D' }}>
                         L{issue.line_range.start}-{issue.line_range.end}
                       </span>
                     </div>
-                    <span className="text-xs font-mono" style={{ color: '#6B5D52' }}>
+                    <span className="text-xs font-mono" style={{ color: '#14213D' }}>
                       {(issue.confidence * 100).toFixed(0)}% confidence
                     </span>
                   </div>
-                  <p className="text-sm mb-2" style={{ color: '#2D0A04' }}>{issue.description}</p>
+                  <p className="text-sm mb-2" style={{ color: '#000000' }}>{issue.description}</p>
                   <div className="flex items-center gap-2">
                     {issue.detectors.map((detector) => (
                       <span key={detector} className="px-2 py-0.5 rounded text-xs border" style={{ background: '#FEF3C7', color: '#92400E', borderColor: '#F59E0B' }}>
@@ -321,14 +321,14 @@ export default function Dashboard() {
         {/* Fixes List */}
         {fixes.length > 0 && (
           <div className="glass-panel p-6 rounded-xl mb-8">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#E6E1D7' }}>
-              <Wrench className="w-5 h-5" style={{ color: '#F6AA1C' }} />
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#FFFFFF' }}>
+              <Wrench className="w-5 h-5" style={{ color: '#FCA311' }} />
               Applied Fixes ({fixes.length})
             </h2>
             
             <div className="space-y-3">
               {fixes.map((fix) => (
-                <div key={fix.fix_id} className="p-4 rounded-lg border" style={{ background: 'rgba(230, 225, 215, 0.85)', borderColor: 'rgba(74, 24, 18, 0.3)' }}>
+                <div key={fix.fix_id} className="p-4 rounded-lg border" style={{ background: '#E5E5E5', borderColor: 'rgba(20, 33, 61, 0.3)' }}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       {fix.status === 'succeeded' ? (
@@ -337,23 +337,23 @@ export default function Dashboard() {
                         <XCircle className="w-5 h-5" style={{ color: '#DC2626' }} />
                       )}
                       <div>
-                        <p className="text-sm font-mono" style={{ color: '#4A1812' }}>{fix.issue_id}</p>
-                        <p className="text-xs" style={{ color: '#6B5D52' }}>
+                        <p className="text-sm font-mono" style={{ color: '#14213D' }}>{fix.issue_id}</p>
+                        <p className="text-xs" style={{ color: 'rgba(20, 33, 61, 0.7)' }}>
                           {fix.codex_live ? (
-                            <span style={{ color: '#D97706' }}>● Live Codex</span>
+                            <span style={{ color: '#FCA311' }}>● Live Codex</span>
                           ) : (
-                            <span style={{ color: '#6B5D52' }}>○ Cached</span>
+                            <span style={{ color: 'rgba(20, 33, 61, 0.7)' }}>○ Cached</span>
                           )}
                         </p>
                       </div>
                     </div>
-                    <span className="text-xs" style={{ color: '#6B5D52' }}>{fix.duration_seconds.toFixed(2)}s</span>
+                    <span className="text-xs" style={{ color: 'rgba(20, 33, 61, 0.7)' }}>{fix.duration_seconds.toFixed(2)}s</span>
                   </div>
-                  <p className="text-sm mb-2" style={{ color: '#2D0A04' }}>{fix.summary}</p>
+                  <p className="text-sm mb-2" style={{ color: '#000000' }}>{fix.summary}</p>
                   {fix.changed_files.length > 0 && (
                     <div className="flex items-center gap-2 flex-wrap">
                       {fix.changed_files.map((file, idx) => (
-                        <code key={idx} className="text-xs px-2 py-1 rounded" style={{ background: 'rgba(107, 45, 28, 0.15)', color: '#2D0A04' }}>
+                        <code key={idx} className="text-xs px-2 py-1 rounded" style={{ background: 'rgba(20, 33, 61, 0.15)', color: '#000000' }}>
                           {file}
                         </code>
                       ))}
@@ -368,14 +368,14 @@ export default function Dashboard() {
         {/* Verdicts List */}
         {verdicts.length > 0 && (
           <div className="glass-panel p-6 rounded-xl">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#E6E1D7' }}>
-              <CheckCircle2 className="w-5 h-5" style={{ color: '#BC3908' }} />
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#FFFFFF' }}>
+              <CheckCircle2 className="w-5 h-5" style={{ color: '#FCA311' }} />
               Verification Results ({verdicts.length})
             </h2>
             
             <div className="space-y-3">
               {verdicts.map((verdict) => (
-                <div key={verdict.verdict_id} className={`p-4 rounded-lg border ${verdict.tests_passed ? 'border-green-600/30' : 'border-red-600/30'}`} style={{ background: 'rgba(230, 225, 215, 0.85)' }}>
+                <div key={verdict.verdict_id} className={`p-4 rounded-lg border ${verdict.tests_passed ? 'border-green-600/30' : 'border-red-600/30'}`} style={{ background: '#E5E5E5' }}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       {verdict.tests_passed ? (
@@ -383,13 +383,13 @@ export default function Dashboard() {
                       ) : (
                         <XCircle className="w-5 h-5" style={{ color: '#DC2626' }} />
                       )}
-                      <span className="text-sm font-mono" style={{ color: '#4A1812' }}>{verdict.issue_id}</span>
+                      <span className="text-sm font-mono" style={{ color: '#14213D' }}>{verdict.issue_id}</span>
                     </div>
-                    <span className="text-xs" style={{ color: '#6B5D52' }}>
+                    <span className="text-xs" style={{ color: 'rgba(20, 33, 61, 0.7)' }}>
                       {(verdict.confidence * 100).toFixed(0)}% confidence
                     </span>
                   </div>
-                  <p className="text-sm" style={{ color: '#2D0A04' }}>{verdict.explanation}</p>
+                  <p className="text-sm" style={{ color: '#000000' }}>{verdict.explanation}</p>
                 </div>
               ))}
             </div>
@@ -422,43 +422,43 @@ export default function Dashboard() {
         {/* Recent Activity Timeline */}
         {latestRun && (
           <div className="glass-panel p-6 rounded-xl mb-8">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#E6E1D7' }}>
-              <Activity className="w-5 h-5" style={{ color: '#F6AA1C' }} />
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#FFFFFF' }}>
+              <Activity className="w-5 h-5" style={{ color: '#FCA311' }} />
               Pipeline Activity
             </h2>
             <div className="space-y-4">
-              <div className="flex items-start gap-4 p-3 rounded-lg" style={{ background: 'rgba(98, 23, 8, 0.2)' }}>
+              <div className="flex items-start gap-4 p-3 rounded-lg" style={{ background: 'rgba(20, 33, 61, 0.5)' }}>
                 <div className="w-2 h-2 rounded-full mt-2" style={{ background: '#10B981' }} />
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium" style={{ color: '#E6E1D7' }}>Pipeline Completed</span>
-                    <span className="text-xs" style={{ color: '#8A8780' }}>Just now</span>
+                    <span className="font-medium" style={{ color: '#FFFFFF' }}>Pipeline Completed</span>
+                    <span className="text-xs" style={{ color: 'rgba(229, 229, 229, 0.6)' }}>Just now</span>
                   </div>
-                  <p className="text-sm" style={{ color: '#B8B3A8' }}>
+                  <p className="text-sm" style={{ color: '#E5E5E5' }}>
                     Scanned codebase, found {latestRun.issues_found} issues, applied {latestRun.fixes_succeeded} fixes
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-4 p-3 rounded-lg" style={{ background: 'rgba(98, 23, 8, 0.2)' }}>
-                <div className="w-2 h-2 rounded-full mt-2" style={{ background: '#F6AA1C' }} />
+              <div className="flex items-start gap-4 p-3 rounded-lg" style={{ background: 'rgba(20, 33, 61, 0.5)' }}>
+                <div className="w-2 h-2 rounded-full mt-2" style={{ background: '#FCA311' }} />
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium" style={{ color: '#E6E1D7' }}>Watcher Agent Activated</span>
-                    <span className="text-xs" style={{ color: '#8A8780' }}>2 min ago</span>
+                    <span className="font-medium" style={{ color: '#FFFFFF' }}>Watcher Agent Activated</span>
+                    <span className="text-xs" style={{ color: 'rgba(229, 229, 229, 0.6)' }}>2 min ago</span>
                   </div>
-                  <p className="text-sm" style={{ color: '#B8B3A8' }}>
+                  <p className="text-sm" style={{ color: '#E5E5E5' }}>
                     Started code analysis with Semgrep + GPT-5.6
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-4 p-3 rounded-lg" style={{ background: 'rgba(98, 23, 8, 0.2)' }}>
-                <div className="w-2 h-2 rounded-full mt-2" style={{ background: '#F6AA1C' }} />
+              <div className="flex items-start gap-4 p-3 rounded-lg" style={{ background: 'rgba(20, 33, 61, 0.5)' }}>
+                <div className="w-2 h-2 rounded-full mt-2" style={{ background: '#FCA311' }} />
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium" style={{ color: '#E6E1D7' }}>Codex Fixer Applied</span>
-                    <span className="text-xs" style={{ color: '#8A8780' }}>3 min ago</span>
+                    <span className="font-medium" style={{ color: '#FFFFFF' }}>Codex Fixer Applied</span>
+                    <span className="text-xs" style={{ color: 'rgba(229, 229, 229, 0.6)' }}>3 min ago</span>
                   </div>
-                  <p className="text-sm" style={{ color: '#B8B3A8' }}>
+                  <p className="text-sm" style={{ color: '#E5E5E5' }}>
                     Generated fixes for {latestRun.fixes_attempted} detected issues
                   </p>
                 </div>
@@ -471,36 +471,36 @@ export default function Dashboard() {
         {latestRun && (
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             <div className="glass-panel p-6 rounded-xl">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#E6E1D7' }}>
-                <TrendingUp className="w-5 h-5" style={{ color: '#F6AA1C' }} />
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#FFFFFF' }}>
+                <TrendingUp className="w-5 h-5" style={{ color: '#FCA311' }} />
                 Success Rate Trend
               </h3>
               <div className="space-y-3">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm" style={{ color: '#B8B3A8' }}>Fix Success Rate</span>
-                    <span className="text-sm font-mono font-bold" style={{ color: '#E6E1D7' }}>
+                    <span className="text-sm" style={{ color: '#E5E5E5' }}>Fix Success Rate</span>
+                    <span className="text-sm font-mono font-bold" style={{ color: '#FFFFFF' }}>
                       {latestRun.fixes_succeeded > 0 ? Math.round((latestRun.fixes_succeeded / latestRun.fixes_attempted) * 100) : 0}%
                     </span>
                   </div>
-                  <div className="w-full h-2 rounded-full" style={{ background: 'rgba(98, 23, 8, 0.3)' }}>
+                  <div className="w-full h-2 rounded-full" style={{ background: 'rgba(20, 33, 61, 0.5)' }}>
                     <div 
                       className="h-full rounded-full" 
                       style={{ 
                         width: `${latestRun.fixes_succeeded > 0 ? (latestRun.fixes_succeeded / latestRun.fixes_attempted) * 100 : 0}%`,
-                        background: 'linear-gradient(90deg, #F6AA1C, #FFB933)'
+                        background: 'linear-gradient(90deg, #FCA311, #FFD93D)'
                       }}
                     />
                   </div>
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm" style={{ color: '#B8B3A8' }}>Verification Rate</span>
-                    <span className="text-sm font-mono font-bold" style={{ color: '#E6E1D7' }}>
+                    <span className="text-sm" style={{ color: '#E5E5E5' }}>Verification Rate</span>
+                    <span className="text-sm font-mono font-bold" style={{ color: '#FFFFFF' }}>
                       {latestRun.fixes_succeeded > 0 ? Math.round((latestRun.verifications_passed / latestRun.fixes_succeeded) * 100) : 0}%
                     </span>
                   </div>
-                  <div className="w-full h-2 rounded-full" style={{ background: 'rgba(98, 23, 8, 0.3)' }}>
+                  <div className="w-full h-2 rounded-full" style={{ background: 'rgba(20, 33, 61, 0.5)' }}>
                     <div 
                       className="h-full rounded-full" 
                       style={{ 
@@ -514,31 +514,31 @@ export default function Dashboard() {
             </div>
 
             <div className="glass-panel p-6 rounded-xl">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#E6E1D7' }}>
-                <AlertTriangle className="w-5 h-5" style={{ color: '#F6AA1C' }} />
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#FFFFFF' }}>
+                <AlertTriangle className="w-5 h-5" style={{ color: '#FCA311' }} />
                 Issue Breakdown
               </h3>
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 rounded" style={{ background: 'rgba(98, 23, 8, 0.2)' }}>
-                  <span className="text-sm" style={{ color: '#B8B3A8' }}>Critical Issues</span>
+                <div className="flex items-center justify-between p-2 rounded" style={{ background: 'rgba(20, 33, 61, 0.5)' }}>
+                  <span className="text-sm" style={{ color: '#E5E5E5' }}>Critical Issues</span>
                   <span className="text-sm font-mono font-bold text-red-400">
                     {issues.filter(i => i.severity === 'critical').length}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded" style={{ background: 'rgba(98, 23, 8, 0.2)' }}>
-                  <span className="text-sm" style={{ color: '#B8B3A8' }}>High Priority</span>
+                <div className="flex items-center justify-between p-2 rounded" style={{ background: 'rgba(20, 33, 61, 0.5)' }}>
+                  <span className="text-sm" style={{ color: '#E5E5E5' }}>High Priority</span>
                   <span className="text-sm font-mono font-bold text-orange-400">
                     {issues.filter(i => i.severity === 'high').length}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded" style={{ background: 'rgba(98, 23, 8, 0.2)' }}>
-                  <span className="text-sm" style={{ color: '#B8B3A8' }}>Medium Priority</span>
+                <div className="flex items-center justify-between p-2 rounded" style={{ background: 'rgba(20, 33, 61, 0.5)' }}>
+                  <span className="text-sm" style={{ color: '#E5E5E5' }}>Medium Priority</span>
                   <span className="text-sm font-mono font-bold text-amber-400">
                     {issues.filter(i => i.severity === 'medium').length}
                   </span>
                 </div>
-                <div className="flex items-center justify-between p-2 rounded" style={{ background: 'rgba(98, 23, 8, 0.2)' }}>
-                  <span className="text-sm" style={{ color: '#B8B3A8' }}>Low Priority</span>
+                <div className="flex items-center justify-between p-2 rounded" style={{ background: 'rgba(20, 33, 61, 0.5)' }}>
+                  <span className="text-sm" style={{ color: '#E5E5E5' }}>Low Priority</span>
                   <span className="text-sm font-mono font-bold text-yellow-400">
                     {issues.filter(i => i.severity === 'low').length}
                   </span>
@@ -551,34 +551,34 @@ export default function Dashboard() {
         {/* Quick Actions */}
         {latestRun && (
           <div className="glass-panel p-6 rounded-xl mb-8">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#E6E1D7' }}>
-              <Code className="w-5 h-5" style={{ color: '#F6AA1C' }} />
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#FFFFFF' }}>
+              <Code className="w-5 h-5" style={{ color: '#FCA311' }} />
               Quick Actions
             </h3>
             <div className="grid md:grid-cols-3 gap-4">
               <button className="p-4 rounded-lg border transition-all hover:border-opacity-100" style={{ 
-                background: 'rgba(98, 23, 8, 0.2)',
-                borderColor: 'rgba(246, 170, 28, 0.3)'
+                background: 'rgba(20, 33, 61, 0.5)',
+                borderColor: 'rgba(252, 163, 17, 0.4)'
               }}>
-                <GitBranch className="w-6 h-6 mb-2" style={{ color: '#F6AA1C' }} />
-                <h4 className="font-semibold mb-1" style={{ color: '#E6E1D7' }}>Create PR</h4>
-                <p className="text-xs" style={{ color: '#8A8780' }}>Push fixes to new branch</p>
+                <GitBranch className="w-6 h-6 mb-2" style={{ color: '#FCA311' }} />
+                <h4 className="font-semibold mb-1" style={{ color: '#FFFFFF' }}>Create PR</h4>
+                <p className="text-xs" style={{ color: 'rgba(229, 229, 229, 0.7)' }}>Push fixes to new branch</p>
               </button>
               <button className="p-4 rounded-lg border transition-all hover:border-opacity-100" style={{ 
-                background: 'rgba(98, 23, 8, 0.2)',
-                borderColor: 'rgba(246, 170, 28, 0.3)'
+                background: 'rgba(20, 33, 61, 0.5)',
+                borderColor: 'rgba(252, 163, 17, 0.4)'
               }}>
-                <Terminal className="w-6 h-6 mb-2" style={{ color: '#F6AA1C' }} />
-                <h4 className="font-semibold mb-1" style={{ color: '#E6E1D7' }}>View Logs</h4>
-                <p className="text-xs" style={{ color: '#8A8780' }}>Check detailed execution</p>
+                <Terminal className="w-6 h-6 mb-2" style={{ color: '#FCA311' }} />
+                <h4 className="font-semibold mb-1" style={{ color: '#FFFFFF' }}>View Logs</h4>
+                <p className="text-xs" style={{ color: 'rgba(229, 229, 229, 0.7)' }}>Check detailed execution</p>
               </button>
               <button className="p-4 rounded-lg border transition-all hover:border-opacity-100" style={{ 
-                background: 'rgba(98, 23, 8, 0.2)',
-                borderColor: 'rgba(246, 170, 28, 0.3)'
+                background: 'rgba(20, 33, 61, 0.5)',
+                borderColor: 'rgba(252, 163, 17, 0.4)'
               }}>
-                <RefreshCw className="w-6 h-6 mb-2" style={{ color: '#F6AA1C' }} />
-                <h4 className="font-semibold mb-1" style={{ color: '#E6E1D7' }}>Re-run Failed</h4>
-                <p className="text-xs" style={{ color: '#8A8780' }}>Retry unsuccessful fixes</p>
+                <RefreshCw className="w-6 h-6 mb-2" style={{ color: '#FCA311' }} />
+                <h4 className="font-semibold mb-1" style={{ color: '#FFFFFF' }}>Re-run Failed</h4>
+                <p className="text-xs" style={{ color: 'rgba(229, 229, 229, 0.7)' }}>Retry unsuccessful fixes</p>
               </button>
             </div>
           </div>

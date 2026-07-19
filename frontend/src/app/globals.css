@@ -26,48 +26,48 @@
     --radius: 0.5rem;
   }
 
-  /* AutoFix Swarm Theme - Warm Palette */
+  /* AutoFix Swarm Theme - Modern Dark Palette */
   .dark {
-    /* Base - Deep Brown (#220901) */
-    --background: 11 96% 7%; /* #220901 Deep Brown */
-    --foreground: 40 22% 91%; /* #E6E1D7 Soft Linen (kept for readability) */
+    /* Base - Pure Black (#000000) */
+    --background: 0 0% 0%; /* #000000 Pure Black */
+    --foreground: 0 0% 100%; /* #FFFFFF Pure White */
     
-    /* Surfaces - Dark Maroon (#621708) */
-    --card: 7 83% 21%; /* #621708 Dark Maroon */
-    --card-foreground: 40 22% 91%; /* #E6E1D7 */
-    --popover: 7 83% 26%; /* Slightly lighter maroon for elevation */
-    --popover-foreground: 40 22% 91%;
+    /* Surfaces - Dark Navy (#14213D) */
+    --card: 215 49% 17%; /* #14213D Dark Navy */
+    --card-foreground: 0 0% 100%; /* #FFFFFF */
+    --popover: 215 49% 20%; /* Slightly lighter navy for elevation */
+    --popover-foreground: 0 0% 100%;
     
-    /* Primary - Golden Orange (#F6AA1C) - CTA BUTTONS */
-    --primary: 38 92% 54%; /* #F6AA1C Golden Orange */
-    --primary-foreground: 11 96% 7%; /* Dark text on golden orange */
+    /* Primary - Vibrant Yellow (#FCA311) - CTA BUTTONS */
+    --primary: 38 98% 54%; /* #FCA311 Vibrant Yellow */
+    --primary-foreground: 0 0% 0%; /* Black text on yellow */
     
-    /* Secondary - Rich Red (#941B0C) */
-    --secondary: 6 84% 32%; /* #941B0C Rich Red */
-    --secondary-foreground: 40 22% 91%;
+    /* Secondary - Dark Navy (#14213D) */
+    --secondary: 215 49% 17%; /* #14213D Dark Navy */
+    --secondary-foreground: 0 0% 100%;
     
-    /* Tertiary - Orange Red (#BC3908) */
-    --tertiary: 16 93% 38%; /* #BC3908 Orange Red */
-    --tertiary-foreground: 40 22% 91%;
+    /* Tertiary - Light Gray (#E5E5E5) */
+    --tertiary: 0 0% 90%; /* #E5E5E5 Light Gray */
+    --tertiary-foreground: 0 0% 0%;
     
-    /* Muted - Elevated Maroon */
-    --muted: 7 70% 18%; /* Darker maroon */
-    --muted-foreground: 40 15% 70%; /* Softer linen */
+    /* Muted - Navy with transparency */
+    --muted: 215 49% 12%; /* Darker navy */
+    --muted-foreground: 0 0% 90%; /* Light gray */
     
-    /* Accent - Golden Orange */
-    --accent: 38 92% 54%; /* #F6AA1C */
-    --accent-foreground: 11 96% 7%;
+    /* Accent - Vibrant Yellow */
+    --accent: 38 98% 54%; /* #FCA311 */
+    --accent-foreground: 0 0% 0%;
     
-    /* Destructive - Rich Red */
-    --destructive: 6 84% 32%; /* #941B0C */
-    --destructive-foreground: 40 22% 91%;
+    /* Destructive - Keep Red for errors */
+    --destructive: 0 72% 51%; /* #DC2626 */
+    --destructive-foreground: 0 0% 100%;
     
     /* Borders */
-    --border: 7 60% 15%; /* Deep maroon border */
-    --input: 7 60% 15%;
+    --border: 215 49% 17%; /* Navy border */
+    --input: 215 49% 17%;
     
-    /* Focus Ring - Golden Orange */
-    --ring: 38 92% 54%; /* #F6AA1C Golden Orange */
+    /* Focus Ring - Vibrant Yellow */
+    --ring: 38 98% 54%; /* #FCA311 Vibrant Yellow */
     
     /* Radius */
     --radius: 0.5rem;
@@ -115,12 +115,12 @@
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--primary) / 0.4); /* Golden orange scrollbar */
+    background-color: hsl(var(--primary) / 0.5); /* Yellow scrollbar */
     border-radius: 9999px;
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--primary) / 0.6);
+    background-color: hsl(var(--primary) / 0.7);
   }
   
   /* Terminal-like styling */
@@ -131,7 +131,7 @@
     letter-spacing: 0.025em;
   }
   
-  /* Status indicators with warm glow */
+  /* Status indicators with vibrant glow */
   .status-indicator {
     width: 0.5rem;
     height: 0.5rem;
@@ -156,8 +156,8 @@
   }
   
   .status-info {
-    background-color: #F6AA1C; /* Golden Orange */
-    box-shadow: 0 0 8px rgba(246, 170, 28, 0.6);
+    background-color: #FCA311; /* Vibrant Yellow */
+    box-shadow: 0 0 8px rgba(252, 163, 17, 0.6);
   }
   
   /* Glassmorphism effects */
@@ -168,15 +168,15 @@
     transition: all 300ms ease;
   }
   
-  /* Hover glow effect - BRONZE */
+  /* Hover glow effect - YELLOW */
   .hover-glow {
     transition: all 300ms ease;
   }
   
   .hover-glow:hover {
-    background-color: hsl(var(--muted) / 0.9);
-    border-color: hsl(var(--primary) / 0.4); /* Golden orange border */
-    box-shadow: 0 4px 20px rgba(246, 170, 28, 0.25); /* Warm golden glow */
+    background-color: hsl(var(--card) / 0.95);
+    border-color: hsl(var(--primary) / 0.5); /* Yellow border */
+    box-shadow: 0 4px 20px rgba(252, 163, 17, 0.3); /* Vibrant yellow glow */
     transform: translateY(-2px);
   }
   
@@ -193,72 +193,110 @@
   
   /* Agent-specific colors */
   .agent-watcher {
-    color: #941B0C; /* Rich Red */
+    color: #14213D; /* Dark Navy */
   }
   
   .agent-fixer {
-    color: #F6AA1C; /* Golden Orange */
+    color: #FCA311; /* Vibrant Yellow */
   }
   
   .agent-reviewer {
-    color: #BC3908; /* Orange Red */
+    color: #FFFFFF; /* Pure White */
   }
   
   /* Button hover effects */
-  .btn-bronze {
-    background: linear-gradient(135deg, #F6AA1C 0%, #E59B12 100%);
-    color: #220901;
+  .btn-yellow {
+    background: linear-gradient(135deg, #FCA311 0%, #FFB820 100%);
+    color: #000000;
     font-weight: 600;
     transition: all 300ms ease;
-    box-shadow: 0 4px 12px rgba(246, 170, 28, 0.3);
+    box-shadow: 0 4px 12px rgba(252, 163, 17, 0.4);
+  }
+  
+  .btn-yellow:hover {
+    background: linear-gradient(135deg, #FFB820 0%, #FFD93D 100%);
+    box-shadow: 0 8px 24px rgba(252, 163, 17, 0.6);
+    transform: translateY(-2px);
+  }
+  
+  .btn-yellow:active {
+    background: linear-gradient(135deg, #E59100 0%, #FCA311 100%);
+    transform: translateY(0);
+  }
+  
+  .btn-navy {
+    background: rgba(20, 33, 61, 0.5);
+    border: 1px solid #FCA311;
+    color: #FFFFFF;
+    transition: all 300ms ease;
+  }
+  
+  .btn-navy:hover {
+    background: rgba(20, 33, 61, 0.8);
+    border-color: #FFB820;
+    box-shadow: 0 4px 12px rgba(252, 163, 17, 0.3);
+  }
+  
+  /* Legacy aliases for backward compatibility */
+  .btn-bronze {
+    background: linear-gradient(135deg, #FCA311 0%, #FFB820 100%);
+    color: #000000;
+    font-weight: 600;
+    transition: all 300ms ease;
+    box-shadow: 0 4px 12px rgba(252, 163, 17, 0.4);
   }
   
   .btn-bronze:hover {
-    background: linear-gradient(135deg, #FFB933 0%, #F6AA1C 100%);
-    box-shadow: 0 8px 24px rgba(246, 170, 28, 0.5);
+    background: linear-gradient(135deg, #FFB820 0%, #FFD93D 100%);
+    box-shadow: 0 8px 24px rgba(252, 163, 17, 0.6);
     transform: translateY(-2px);
   }
   
   .btn-bronze:active {
-    background: linear-gradient(135deg, #E59B12 0%, #D48A0A 100%);
+    background: linear-gradient(135deg, #E59100 0%, #FCA311 100%);
     transform: translateY(0);
   }
   
   .btn-teal {
-    background: rgba(148, 27, 12, 0.3);
-    border: 1px solid rgba(148, 27, 12, 0.6);
-    color: #E6E1D7;
+    background: rgba(20, 33, 61, 0.5);
+    border: 1px solid #FCA311;
+    color: #FFFFFF;
     transition: all 300ms ease;
   }
   
   .btn-teal:hover {
-    background: rgba(148, 27, 12, 0.5);
-    border-color: #941B0C;
-    box-shadow: 0 4px 12px rgba(148, 27, 12, 0.3);
+    background: rgba(20, 33, 61, 0.8);
+    border-color: #FFB820;
+    box-shadow: 0 4px 12px rgba(252, 163, 17, 0.3);
   }
   
-  /* Focus ring - golden orange */
+  /* Focus ring - vibrant yellow */
   *:focus-visible {
-    outline: 2px solid #F6AA1C;
+    outline: 2px solid #FCA311;
     outline-offset: 2px;
     border-radius: 4px;
   }
   
-  /* Warm shadows */
-  .shadow-warm-sm {
-    box-shadow: 0 2px 8px rgba(45, 45, 45, 0.6);
+  /* Dark shadows */
+  .shadow-dark-sm {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
   }
   
-  .shadow-warm-md {
-    box-shadow: 0 4px 16px rgba(45, 45, 45, 0.7);
+  .shadow-dark-md {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.9);
   }
   
-  .shadow-warm-lg {
-    box-shadow: 0 8px 32px rgba(45, 45, 45, 0.8);
+  .shadow-dark-lg {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.95);
   }
   
+  .shadow-yellow-glow {
+    box-shadow: 0 4px 20px rgba(252, 163, 17, 0.4);
+  }
+  
+  /* Legacy alias */
   .shadow-bronze-glow {
-    box-shadow: 0 4px 20px rgba(246, 170, 28, 0.35);
+    box-shadow: 0 4px 20px rgba(252, 163, 17, 0.4);
   }
 }
 
@@ -292,7 +330,7 @@
 }
 
 .split-char {
-  color: #E6E1D7;
+  color: #FFFFFF;
 }
 
 /* Enhanced hover effects */
@@ -312,7 +350,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(246, 170, 28, 0.1),
+    rgba(252, 163, 17, 0.15),
     transparent
   );
   transition: left 0.5s ease;
@@ -324,7 +362,7 @@
 
 .glass-panel:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(246, 170, 28, 0.3);
+  box-shadow: 0 12px 40px rgba(252, 163, 17, 0.35);
 }
 
 /* Smooth scroll */

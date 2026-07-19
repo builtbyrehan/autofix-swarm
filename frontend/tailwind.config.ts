@@ -43,14 +43,13 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // AutoFix Swarm brand colors - Warm Palette
+        // AutoFix Swarm brand colors - Modern Dark Palette
         brand: {
-          deepBrown: "#220901",
-          darkMaroon: "#621708",
-          richRed: "#941B0C",
-          orangeRed: "#BC3908",
-          goldenOrange: "#F6AA1C",
-          linen: "#E6E1D7",
+          black: "#000000",
+          navy: "#14213D",
+          yellow: "#FCA311",
+          lightGray: "#E5E5E5",
+          white: "#FFFFFF",
         },
         // Severity/status colors
         success: {
