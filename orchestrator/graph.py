@@ -205,7 +205,11 @@ class Pipeline:
             Updated state with fix results
         """
         if self.fixer is None:
-            self.fixer = CodexFixer()
+            self.fixer = CodexFixer(
+                openai_api_key=state.config.openai_api_key,
+                openai_base_url=state.config.openai_base_url,
+                openai_model=state.config.openai_model,
+            )
 
         if not state.watcher_result:
             return state
