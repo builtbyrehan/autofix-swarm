@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Terminal, Bug, Wrench, CheckCircle2, AlertCircle, Clock, TrendingUp } from "lucide-react";
+import { Terminal, Bug, Wrench, CheckCircle2, AlertCircle, Clock, TrendingUp, Search, Sparkles, Shield } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import SplitText from "@/components/SplitText";
@@ -186,7 +186,7 @@ export default function Home() {
                   background: 'linear-gradient(to bottom right, rgba(246, 170, 28, 0.3), rgba(246, 170, 28, 0.1))', 
                   border: '1px solid rgba(246, 170, 28, 0.4)' 
                 }}>
-                  <Bug className="w-8 h-8" style={{ color: '#F6AA1C' }} />
+                  <Search className="w-8 h-8" style={{ color: '#F6AA1C' }} />
                 </div>
                 <h4 className="text-lg font-semibold mb-2" style={{ color: '#E6E1D7' }}>Watcher</h4>
                 <p className="text-sm" style={{ color: '#B8B3A8' }}>
@@ -196,29 +196,27 @@ export default function Home() {
             </AnimatedCard>
 
             {/* Codex Fixer */}
-            <AnimatedCard delay={0.4} from="bottom">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ 
+                background: 'linear-gradient(to bottom right, rgba(246, 170, 28, 0.3), rgba(246, 170, 28, 0.1))', 
+                border: '1px solid rgba(246, 170, 28, 0.4)' 
+              }}>
+                <Sparkles className="w-8 h-8" style={{ color: '#F6AA1C' }} />
+              </div>
+              <h4 className="text-lg font-semibold mb-2" style={{ color: '#E6E1D7' }}>Codex Fixer</h4>
+              <p className="text-sm" style={{ color: '#B8B3A8' }}>
+                Uses OpenAI Codex to write actual code fixes, safely isolated in a sandbox environment
+              </p>
+            </div>
+
+            {/* Reviewer */}
+            <AnimatedCard delay={0.4} from="right">
               <div className="text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ 
                   background: 'linear-gradient(to bottom right, rgba(246, 170, 28, 0.3), rgba(246, 170, 28, 0.1))', 
                   border: '1px solid rgba(246, 170, 28, 0.4)' 
                 }}>
-                  <Wrench className="w-8 h-8" style={{ color: '#F6AA1C' }} />
-                </div>
-                <h4 className="text-lg font-semibold mb-2" style={{ color: '#E6E1D7' }}>Codex Fixer</h4>
-                <p className="text-sm" style={{ color: '#B8B3A8' }}>
-                  Uses OpenAI Codex to write actual code fixes, safely isolated in a sandbox environment
-                </p>
-              </div>
-            </AnimatedCard>
-
-            {/* Reviewer */}
-            <AnimatedCard delay={0.6} from="right">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ 
-                  background: 'linear-gradient(to bottom right, rgba(188, 57, 8, 0.3), rgba(188, 57, 8, 0.1))', 
-                  border: '1px solid rgba(188, 57, 8, 0.4)' 
-                }}>
-                  <CheckCircle2 className="w-8 h-8" style={{ color: '#F6AA1C' }} />
+                  <Shield className="w-8 h-8" style={{ color: '#F6AA1C' }} />
                 </div>
                 <h4 className="text-lg font-semibold mb-2" style={{ color: '#E6E1D7' }}>Reviewer</h4>
                 <p className="text-sm" style={{ color: '#B8B3A8' }}>
