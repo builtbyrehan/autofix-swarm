@@ -13,3 +13,4 @@ _distill_query*.py
 autofix_swarm.egg-info/
 .venv/
 venv/
+frontend/.next/
