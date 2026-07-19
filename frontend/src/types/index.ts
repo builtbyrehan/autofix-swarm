@@ -57,6 +57,8 @@ export interface PipelineRun {
   total_duration_seconds: number;
   message?: string;
   timestamp: string;
+  started_at?: string;
+  completed_at?: string;
 }
 
 export interface PipelineResult {
@@ -89,4 +91,40 @@ export interface PipelineRunRequest {
   use_gpt?: boolean;
   max_issues?: number;
   auto_fix_threshold?: number;
+}
+
+export interface CustomCodeRunRequest {
+  code?: string;
+  repo_path?: string;
+  use_semgrep?: boolean;
+  use_gpt?: boolean;
+  max_issues?: number;
+  language?: string;
+}
+
+export type DataSource = "live" | "cached" | "mock" | "demo";
+export type PipelineStage = "idle" | "scanning" | "fixing" | "verifying" | "completed";
+
+export type SeverityLevel = "critical" | "high" | "medium" | "low";
+
+export interface EvalScores {
+  bugs_planted: number;
+  bugs_found: number;
+  detection_rate: number;
+  verified_fixes_passed: number;
+  fix_success_rate: number;
+  false_positive_count: number;
+  average_recorded_latency_ms: number;
+}
+
+export type AgentName = "watcher" | "codex" | "reviewer";
+
+export interface AgentLogEntry {
+  id: string;
+  ts: string;
+  timestamp?: string;
+  level: "info" | "warn" | "error" | "debug" | "success";
+  agent: AgentName;
+  stage?: string;
+  message: string;
 }

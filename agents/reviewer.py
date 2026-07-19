@@ -164,6 +164,15 @@ class Reviewer:
     def _run_tests(self, repo_path: Path) -> tuple[bool, str, int]:
         """Run test suite against the patched repository.
 
+        Note (v1 limitation): ``repo_path`` is the original target repo. In the
+        current pipeline the Reviewer does not receive a patched copy — the
+        Codex Fixer writes its diff to an artifact only, so these tests run
+        against the *pre-fix* state. The verdict should therefore be read as
+        "tests pass on the unmodified codebase," not "tests pass after the
+        fix was applied." This is acceptable for v1 because the GPT-grounded
+        explanation still inspects the diff; a follow-up should apply the
+        patch to a sandbox copy before running tests.
+
         Args:
             repo_path: Path to repository
 

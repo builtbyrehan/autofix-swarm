@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Optional
 
@@ -73,7 +73,7 @@ class ScanResponse(BaseModel):
     issues_found: int
     duration_seconds: float
     message: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class FixRequest(BaseModel):
@@ -102,7 +102,7 @@ class FixResponse(BaseModel):
     artifact_path: Optional[str] = None
     duration_seconds: float
     failure_reason: str = ""
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class VerifyRequest(BaseModel):
@@ -122,7 +122,7 @@ class VerifyResponse(BaseModel):
     explanation: str
     confidence: float = Field(..., ge=0.0, le=1.0)
     duration_seconds: float
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class PipelineRunRequest(BaseModel):
@@ -151,7 +151,7 @@ class PipelineRunResponse(BaseModel):
     verifications_passed: int
     total_duration_seconds: float
     message: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # ---------------------------------------------------------------------------
@@ -233,4 +233,4 @@ class HealthResponse(BaseModel):
     codex_available: bool
     gpt_available: bool
     database_connected: bool
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

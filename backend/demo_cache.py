@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
@@ -92,7 +92,7 @@ class DemoCache:
         index = self._read_index()
         run_entry = {
             "run_id": run_id,
-            "cached_at": datetime.utcnow().isoformat(),
+            "cached_at": datetime.now(timezone.utc).isoformat(),
             "status": pipeline_state.get("status", "unknown"),
             "issues_found": pipeline_state.get("issues_found", 0),
             "fixes_succeeded": pipeline_state.get("fixes_succeeded", 0),

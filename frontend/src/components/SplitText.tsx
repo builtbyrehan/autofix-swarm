@@ -172,10 +172,10 @@ const SplitText: React.FC<SplitTextProps> = ({
     const classes = `split-parent overflow-hidden inline-block whitespace-normal ${className}`;
     const Tag = (tag || 'p') as React.ElementType;
 
-    return (
-      <Tag ref={ref} style={style} className={classes}>
-        {text}
-      </Tag>
+    return React.createElement(
+      Tag as keyof JSX.IntrinsicElements,
+      { ref, style, className: classes },
+      text
     );
   };
 
