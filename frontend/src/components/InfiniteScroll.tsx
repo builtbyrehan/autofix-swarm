@@ -10,8 +10,8 @@ interface InfiniteScrollProps {
   className?: string;
 }
 
-const InfiniteScroll: React.FC<InfiniteScrollProps> = ({ 
-  children, 
+const InfiniteScroll: React.FC<InfiniteScrollProps> = ({
+  children,
   speed = 30,
   direction = 'left',
   className = ''
@@ -51,8 +51,11 @@ const InfiniteScroll: React.FC<InfiniteScrollProps> = ({
   }, [speed, direction]);
 
   return (
-    <div ref={containerRef} className={`overflow-hidden whitespace-nowrap ${className}`}>
-      <div ref={contentRef} className="inline-block">
+    <div
+      ref={containerRef}
+      className={`flex overflow-x-hidden overflow-y-visible ${className}`}
+    >
+      <div ref={contentRef} className="flex flex-shrink-0 items-center">
         {children}
       </div>
     </div>
