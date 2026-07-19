@@ -43,7 +43,16 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Developer tool specific colors (Cyan/Teal theme - NO PURPLE)
+        // AutoFix Swarm brand colors - Warm Palette
+        brand: {
+          deepBrown: "#220901",
+          darkMaroon: "#621708",
+          richRed: "#941B0C",
+          orangeRed: "#BC3908",
+          goldenOrange: "#F6AA1C",
+          linen: "#E6E1D7",
+        },
+        // Severity/status colors
         success: {
           DEFAULT: "hsl(158, 64%, 52%)", // #10b981 Green
           light: "hsl(158, 64%, 62%)",
@@ -60,9 +69,9 @@ const config: Config = {
           dark: "hsl(0, 72%, 41%)",
         },
         info: {
-          DEFAULT: "hsl(199, 89%, 48%)", // #06b6d4 Cyan
-          light: "hsl(199, 89%, 58%)",
-          dark: "hsl(199, 89%, 38%)",
+          DEFAULT: "hsl(193, 29%, 21%)", // #24434A Teal
+          light: "hsl(193, 29%, 31%)",
+          dark: "hsl(193, 29%, 11%)",
         },
       },
       borderRadius: {

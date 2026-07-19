@@ -26,27 +26,51 @@
     --radius: 0.5rem;
   }
 
-  /* Dark Mode - Developer Tool Theme (Cyan/Teal + Slate) */
+  /* AutoFix Swarm Theme - Warm Palette */
   .dark {
-    --background: 222.2 84% 4.9%; /* Deep slate */
-    --foreground: 210 40% 98%;
-    --card: 217.2 32.6% 17.5%; /* Slate-800 */
-    --card-foreground: 210 40% 98%;
-    --popover: 217.2 32.6% 17.5%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 199 89% 48%; /* Cyan-500 - Main brand color */
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 215.3 25% 26.7%; /* Slate-700 */
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 188 94% 50%; /* Teal-400 - Accent color */
-    --accent-foreground: 222.2 84% 4.9%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /* Base - Deep Brown (#220901) */
+    --background: 11 96% 7%; /* #220901 Deep Brown */
+    --foreground: 40 22% 91%; /* #E6E1D7 Soft Linen (kept for readability) */
+    
+    /* Surfaces - Dark Maroon (#621708) */
+    --card: 7 83% 21%; /* #621708 Dark Maroon */
+    --card-foreground: 40 22% 91%; /* #E6E1D7 */
+    --popover: 7 83% 26%; /* Slightly lighter maroon for elevation */
+    --popover-foreground: 40 22% 91%;
+    
+    /* Primary - Golden Orange (#F6AA1C) - CTA BUTTONS */
+    --primary: 38 92% 54%; /* #F6AA1C Golden Orange */
+    --primary-foreground: 11 96% 7%; /* Dark text on golden orange */
+    
+    /* Secondary - Rich Red (#941B0C) */
+    --secondary: 6 84% 32%; /* #941B0C Rich Red */
+    --secondary-foreground: 40 22% 91%;
+    
+    /* Tertiary - Orange Red (#BC3908) */
+    --tertiary: 16 93% 38%; /* #BC3908 Orange Red */
+    --tertiary-foreground: 40 22% 91%;
+    
+    /* Muted - Elevated Maroon */
+    --muted: 7 70% 18%; /* Darker maroon */
+    --muted-foreground: 40 15% 70%; /* Softer linen */
+    
+    /* Accent - Golden Orange */
+    --accent: 38 92% 54%; /* #F6AA1C */
+    --accent-foreground: 11 96% 7%;
+    
+    /* Destructive - Rich Red */
+    --destructive: 6 84% 32%; /* #941B0C */
+    --destructive-foreground: 40 22% 91%;
+    
+    /* Borders */
+    --border: 7 60% 15%; /* Deep maroon border */
+    --input: 7 60% 15%;
+    
+    /* Focus Ring - Golden Orange */
+    --ring: 38 92% 54%; /* #F6AA1C Golden Orange */
+    
+    /* Radius */
+    --radius: 0.5rem;
   }
 }
 
@@ -91,12 +115,12 @@
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--muted-foreground) / 0.3);
+    background-color: hsl(var(--primary) / 0.4); /* Golden orange scrollbar */
     border-radius: 9999px;
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--muted-foreground) / 0.5);
+    background-color: hsl(var(--primary) / 0.6);
   }
   
   /* Terminal-like styling */
@@ -107,7 +131,7 @@
     letter-spacing: 0.025em;
   }
   
-  /* Status indicators */
+  /* Status indicators with warm glow */
   .status-indicator {
     width: 0.5rem;
     height: 0.5rem;
@@ -117,23 +141,23 @@
   }
   
   .status-success {
-    background-color: hsl(158, 64%, 52%);
-    box-shadow: 0 0 8px hsl(158, 64%, 52%);
+    background-color: #10B981; /* Emerald */
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
   }
   
   .status-warning {
-    background-color: hsl(38, 92%, 50%);
-    box-shadow: 0 0 8px hsl(38, 92%, 50%);
+    background-color: #F59E0B; /* Amber */
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
   }
   
   .status-error {
-    background-color: hsl(0, 72%, 51%);
-    box-shadow: 0 0 8px hsl(0, 72%, 51%);
+    background-color: #DC2626; /* Red */
+    box-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
   }
   
   .status-info {
-    background-color: hsl(199, 89%, 48%);
-    box-shadow: 0 0 8px hsl(199, 89%, 48%);
+    background-color: #F6AA1C; /* Golden Orange */
+    box-shadow: 0 0 8px rgba(246, 170, 28, 0.6);
   }
   
   /* Glassmorphism effects */
@@ -141,26 +165,100 @@
     background-color: hsl(var(--card) / 0.8);
     backdrop-filter: blur(24px);
     border: 1px solid hsl(var(--border) / 0.5);
+    transition: all 300ms ease;
   }
   
-  /* Hover glow effect (cyan, not purple) */
+  /* Hover glow effect - BRONZE */
   .hover-glow {
-    transition: box-shadow 300ms;
+    transition: all 300ms ease;
   }
   
   .hover-glow:hover {
-    box-shadow: 0 0 20px hsl(199 89% 48% / 0.3);
+    background-color: hsl(var(--muted) / 0.9);
+    border-color: hsl(var(--primary) / 0.4); /* Golden orange border */
+    box-shadow: 0 4px 20px rgba(246, 170, 28, 0.25); /* Warm golden glow */
+    transform: translateY(-2px);
   }
   
   /* Code diff colors */
   .diff-added {
-    background-color: hsl(158 64% 52% / 0.1);
-    border-left: 2px solid hsl(158, 64%, 52%);
+    background-color: rgba(16, 185, 129, 0.1);
+    border-left: 2px solid #10B981;
   }
   
   .diff-removed {
-    background-color: hsl(0 72% 51% / 0.1);
-    border-left: 2px solid hsl(0, 72%, 51%);
+    background-color: rgba(220, 38, 38, 0.1);
+    border-left: 2px solid #DC2626;
+  }
+  
+  /* Agent-specific colors */
+  .agent-watcher {
+    color: #941B0C; /* Rich Red */
+  }
+  
+  .agent-fixer {
+    color: #F6AA1C; /* Golden Orange */
+  }
+  
+  .agent-reviewer {
+    color: #BC3908; /* Orange Red */
+  }
+  
+  /* Button hover effects */
+  .btn-bronze {
+    background: linear-gradient(135deg, #F6AA1C 0%, #E59B12 100%);
+    color: #220901;
+    font-weight: 600;
+    transition: all 300ms ease;
+    box-shadow: 0 4px 12px rgba(246, 170, 28, 0.3);
+  }
+  
+  .btn-bronze:hover {
+    background: linear-gradient(135deg, #FFB933 0%, #F6AA1C 100%);
+    box-shadow: 0 8px 24px rgba(246, 170, 28, 0.5);
+    transform: translateY(-2px);
+  }
+  
+  .btn-bronze:active {
+    background: linear-gradient(135deg, #E59B12 0%, #D48A0A 100%);
+    transform: translateY(0);
+  }
+  
+  .btn-teal {
+    background: rgba(148, 27, 12, 0.3);
+    border: 1px solid rgba(148, 27, 12, 0.6);
+    color: #E6E1D7;
+    transition: all 300ms ease;
+  }
+  
+  .btn-teal:hover {
+    background: rgba(148, 27, 12, 0.5);
+    border-color: #941B0C;
+    box-shadow: 0 4px 12px rgba(148, 27, 12, 0.3);
+  }
+  
+  /* Focus ring - golden orange */
+  *:focus-visible {
+    outline: 2px solid #F6AA1C;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  
+  /* Warm shadows */
+  .shadow-warm-sm {
+    box-shadow: 0 2px 8px rgba(45, 45, 45, 0.6);
+  }
+  
+  .shadow-warm-md {
+    box-shadow: 0 4px 16px rgba(45, 45, 45, 0.7);
+  }
+  
+  .shadow-warm-lg {
+    box-shadow: 0 8px 32px rgba(45, 45, 45, 0.8);
+  }
+  
+  .shadow-bronze-glow {
+    box-shadow: 0 4px 20px rgba(246, 170, 28, 0.35);
   }
 }
 
@@ -178,4 +276,75 @@
 
 .timeline-animate {
   animation: timeline-pulse 2s ease-in-out infinite;
+}
+
+/* Split text animation styles */
+.split-parent {
+  display: inline-block;
+  overflow: visible;
+}
+
+.split-char,
+.split-word,
+.split-line {
+  display: inline-block;
+  transform-origin: center;
+}
+
+.split-char {
+  color: #E6E1D7;
+}
+
+/* Enhanced hover effects */
+.glass-panel {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(246, 170, 28, 0.1),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.glass-panel:hover::before {
+  left: 100%;
+}
+
+.glass-panel:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(246, 170, 28, 0.3);
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Cursor effects */
+@media (hover: hover) {
+  .btn-bronze,
+  .btn-teal {
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn-bronze:active {
+    transform: scale(0.95);
+  }
+
+  .btn-teal:active {
+    transform: scale(0.95);
+  }
 }

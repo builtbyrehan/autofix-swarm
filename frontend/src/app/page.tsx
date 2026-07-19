@@ -3,6 +3,13 @@
 import { useEffect, useState } from "react";
 import { Terminal, Bug, Wrench, CheckCircle2, AlertCircle, Clock, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
+import SplitText from "@/components/SplitText";
+import AnimatedBackground from "@/components/AnimatedBackground";
+import AnimatedCard from "@/components/AnimatedCard";
+import CounterAnimation from "@/components/CounterAnimation";
+import MagneticButton from "@/components/MagneticButton";
+import InfiniteScroll from "@/components/InfiniteScroll";
 
 interface HealthStatus {
   status: string;
@@ -37,19 +44,29 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800">
+    <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(to bottom right, #220901, #2D0A04, #1A0500)' }}>
+      {/* Animated Background */}
+      <AnimatedBackground />
+      
+      {/* Content */}
+      <div className="relative z-10">
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-xl">
+      <header className="border-b backdrop-blur-xl" style={{ borderColor: '#4A1812', background: 'rgba(34, 9, 1, 0.8)' }}>
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Terminal className="w-8 h-8 text-cyan-400" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
+                <Image 
+                  src="/logo.png" 
+                  alt="AutoFix Swarm Logo" 
+                  width={40} 
+                  height={40}
+                  className="w-10 h-10"
+                />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">AutoFix Swarm</h1>
-                <p className="text-xs text-slate-400">Autonomous Bug Detection & Remediation</p>
+                <h1 className="text-2xl font-bold" style={{ color: '#E6E1D7' }}>AutoFix Swarm</h1>
+                <p className="text-xs" style={{ color: '#8A8780' }}>Autonomous Bug Detection & Remediation</p>
               </div>
             </div>
             
@@ -57,15 +74,15 @@ export default function Home() {
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
                   <span className={`status-indicator ${health.database_connected ? 'status-success' : 'status-error'}`} />
-                  <span className="text-sm text-slate-300">Database</span>
+                  <span className="text-sm" style={{ color: '#B8B3A8' }}>Database</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`status-indicator ${health.codex_available ? 'status-success' : 'status-warning'}`} />
-                  <span className="text-sm text-slate-300">Codex</span>
+                  <span className="text-sm" style={{ color: '#B8B3A8' }}>Codex</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`status-indicator ${health.gpt_available ? 'status-success' : 'status-warning'}`} />
-                  <span className="text-sm text-slate-300">GPT-5.6</span>
+                  <span className="text-sm" style={{ color: '#B8B3A8' }}>GPT-5.6</span>
                 </div>
               </div>
             )}
@@ -76,146 +93,209 @@ export default function Home() {
       <main className="container mx-auto px-6 py-12">
         {/* Hero Section */}
         <div className="text-center mb-16">
-          <h2 className="text-5xl font-bold text-white mb-4">
-            Find Bugs. Fix Them.{" "}
-            <span className="bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent">
-              Automatically.
+          <SplitText
+            text="Software That Fixes Itself."
+            tag="h2"
+            className="text-5xl font-bold mb-4"
+            delay={30}
+            duration={1}
+            ease="power3.out"
+            splitType="chars"
+            from={{ opacity: 0, y: 50 }}
+            to={{ opacity: 1, y: 0 }}
+            threshold={0.2}
+            rootMargin="0px"
+            textAlign="center"
+          />
+          <p className="text-xl mb-8" style={{ color: '#B8B3A8' }}>
+            Less Debugging.{" "}
+            <span className="bg-gradient-to-r from-[#F6AA1C] to-[#FFB933] bg-clip-text text-transparent font-semibold">
+              More Shipping.
             </span>
-          </h2>
-          <p className="text-xl text-slate-400 mb-8">
-            AI-powered agents that scan, fix, and verify your code — so you don't have to.
+          </p>
+          <p className="text-lg mb-8 max-w-3xl mx-auto" style={{ color: '#B8B3A8' }}>
+            Autonomous AI agents detect bugs, generate verified fixes with Codex, validate every change, and explain the reasoning before you merge.
           </p>
           
           <div className="flex items-center justify-center gap-4">
-            <Link 
-              href="/dashboard"
-              className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-900 font-semibold rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all duration-300 hover:-translate-y-0.5"
-            >
-              Launch Dashboard
+            <Link href="/dashboard">
+              <MagneticButton className="btn-bronze px-8 py-4 rounded-lg shadow-bronze-glow">
+                Launch Dashboard
+              </MagneticButton>
             </Link>
-            <button className="px-8 py-4 bg-slate-800 text-white font-semibold rounded-lg border border-slate-700 hover:bg-slate-700 transition-all duration-300">
+            <MagneticButton className="btn-teal px-8 py-4 rounded-lg">
               View Documentation
-            </button>
+            </MagneticButton>
           </div>
         </div>
 
         {/* Stats Grid */}
         <div className="grid md:grid-cols-4 gap-6 mb-16">
-          <div className="glass-panel p-6 rounded-xl hover-glow">
-            <div className="flex items-center justify-between mb-4">
-              <TrendingUp className="w-8 h-8 text-cyan-400" />
-              <span className="text-2xl font-mono font-bold text-white">{stats.totalRuns}</span>
+          <AnimatedCard delay={0.1} from="bottom">
+            <div className="glass-panel p-6 rounded-xl hover-glow">
+              <div className="flex items-center justify-between mb-4">
+                <TrendingUp className="w-8 h-8" style={{ color: '#F6AA1C' }} />
+                <CounterAnimation end={stats.totalRuns} className="text-2xl font-mono font-bold" style={{ color: '#E6E1D7' }} />
+              </div>
+              <h3 className="text-sm font-medium" style={{ color: '#B8B3A8' }}>Pipeline Runs</h3>
             </div>
-            <h3 className="text-slate-400 text-sm font-medium">Pipeline Runs</h3>
-          </div>
+          </AnimatedCard>
 
-          <div className="glass-panel p-6 rounded-xl hover-glow">
-            <div className="flex items-center justify-between mb-4">
-              <Bug className="w-8 h-8 text-red-400" />
-              <span className="text-2xl font-mono font-bold text-white">{stats.totalIssues}</span>
+          <AnimatedCard delay={0.2} from="bottom">
+            <div className="glass-panel p-6 rounded-xl hover-glow">
+              <div className="flex items-center justify-between mb-4">
+                <Bug className="w-8 h-8" style={{ color: '#F6AA1C' }} />
+                <CounterAnimation end={stats.totalIssues} className="text-2xl font-mono font-bold" style={{ color: '#E6E1D7' }} />
+              </div>
+              <h3 className="text-sm font-medium" style={{ color: '#B8B3A8' }}>Issues Detected</h3>
             </div>
-            <h3 className="text-slate-400 text-sm font-medium">Issues Detected</h3>
-          </div>
+          </AnimatedCard>
 
-          <div className="glass-panel p-6 rounded-xl hover-glow">
-            <div className="flex items-center justify-between mb-4">
-              <Wrench className="w-8 h-8 text-amber-400" />
-              <span className="text-2xl font-mono font-bold text-white">{stats.totalFixes}</span>
+          <AnimatedCard delay={0.3} from="bottom">
+            <div className="glass-panel p-6 rounded-xl hover-glow">
+              <div className="flex items-center justify-between mb-4">
+                <Wrench className="w-8 h-8" style={{ color: '#F6AA1C' }} />
+                <CounterAnimation end={stats.totalFixes} className="text-2xl font-mono font-bold" style={{ color: '#E6E1D7' }} />
+              </div>
+              <h3 className="text-sm font-medium" style={{ color: '#B8B3A8' }}>Fixes Applied</h3>
             </div>
-            <h3 className="text-slate-400 text-sm font-medium">Fixes Applied</h3>
-          </div>
+          </AnimatedCard>
 
-          <div className="glass-panel p-6 rounded-xl hover-glow">
-            <div className="flex items-center justify-between mb-4">
-              <CheckCircle2 className="w-8 h-8 text-green-400" />
-              <span className="text-2xl font-mono font-bold text-white">{stats.successRate}%</span>
+          <AnimatedCard delay={0.4} from="bottom">
+            <div className="glass-panel p-6 rounded-xl hover-glow">
+              <div className="flex items-center justify-between mb-4">
+                <CheckCircle2 className="w-8 h-8" style={{ color: '#F6AA1C' }} />
+                <CounterAnimation end={stats.successRate} suffix="%" className="text-2xl font-mono font-bold" style={{ color: '#E6E1D7' }} />
+              </div>
+              <h3 className="text-sm font-medium" style={{ color: '#B8B3A8' }}>Success Rate</h3>
             </div>
-            <h3 className="text-slate-400 text-sm font-medium">Success Rate</h3>
-          </div>
+          </AnimatedCard>
         </div>
 
         {/* How It Works */}
-        <div className="glass-panel p-8 rounded-xl mb-12">
-          <h3 className="text-2xl font-bold text-white mb-8 text-center">
+        <AnimatedCard className="glass-panel p-8 rounded-xl mb-12">
+          <h3 className="text-2xl font-bold mb-8 text-center" style={{ color: '#E6E1D7' }}>
             Three Agents. One Mission.
           </h3>
           
           <div className="grid md:grid-cols-3 gap-8">
             {/* Watcher */}
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-cyan-500/20 to-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
-                <Bug className="w-8 h-8 text-cyan-400" />
+            <AnimatedCard delay={0.2} from="left">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ 
+                  background: 'linear-gradient(to bottom right, rgba(246, 170, 28, 0.3), rgba(246, 170, 28, 0.1))', 
+                  border: '1px solid rgba(246, 170, 28, 0.4)' 
+                }}>
+                  <Bug className="w-8 h-8" style={{ color: '#F6AA1C' }} />
+                </div>
+                <h4 className="text-lg font-semibold mb-2" style={{ color: '#E6E1D7' }}>Watcher</h4>
+                <p className="text-sm" style={{ color: '#B8B3A8' }}>
+                  Scans your code with Semgrep + GPT-5.6 to detect bugs, security issues, and code smells
+                </p>
               </div>
-              <h4 className="text-lg font-semibold text-white mb-2">Watcher</h4>
-              <p className="text-slate-400 text-sm">
-                Scans your code with Semgrep + GPT-5.6 to detect bugs, security issues, and code smells
-              </p>
-            </div>
+            </AnimatedCard>
 
             {/* Codex Fixer */}
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-teal-500/20 to-teal-500/10 border border-teal-500/30 flex items-center justify-center">
-                <Wrench className="w-8 h-8 text-teal-400" />
+            <AnimatedCard delay={0.4} from="bottom">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ 
+                  background: 'linear-gradient(to bottom right, rgba(246, 170, 28, 0.3), rgba(246, 170, 28, 0.1))', 
+                  border: '1px solid rgba(246, 170, 28, 0.4)' 
+                }}>
+                  <Wrench className="w-8 h-8" style={{ color: '#F6AA1C' }} />
+                </div>
+                <h4 className="text-lg font-semibold mb-2" style={{ color: '#E6E1D7' }}>Codex Fixer</h4>
+                <p className="text-sm" style={{ color: '#B8B3A8' }}>
+                  Uses OpenAI Codex to write actual code fixes, safely isolated in a sandbox environment
+                </p>
               </div>
-              <h4 className="text-lg font-semibold text-white mb-2">Codex Fixer</h4>
-              <p className="text-slate-400 text-sm">
-                Uses OpenAI Codex to write actual code fixes, safely isolated in a sandbox environment
-              </p>
-            </div>
+            </AnimatedCard>
 
             {/* Reviewer */}
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-500/20 to-green-500/10 border border-green-500/30 flex items-center justify-center">
-                <CheckCircle2 className="w-8 h-8 text-green-400" />
+            <AnimatedCard delay={0.6} from="right">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ 
+                  background: 'linear-gradient(to bottom right, rgba(188, 57, 8, 0.3), rgba(188, 57, 8, 0.1))', 
+                  border: '1px solid rgba(188, 57, 8, 0.4)' 
+                }}>
+                  <CheckCircle2 className="w-8 h-8" style={{ color: '#F6AA1C' }} />
+                </div>
+                <h4 className="text-lg font-semibold mb-2" style={{ color: '#E6E1D7' }}>Reviewer</h4>
+                <p className="text-sm" style={{ color: '#B8B3A8' }}>
+                  Runs tests to verify fixes and generates human-readable explanations with GPT-5.6
+                </p>
               </div>
-              <h4 className="text-lg font-semibold text-white mb-2">Reviewer</h4>
-              <p className="text-slate-400 text-sm">
-                Runs tests to verify fixes and generates human-readable explanations with GPT-5.6
-              </p>
-            </div>
+            </AnimatedCard>
           </div>
-        </div>
+        </AnimatedCard>
 
         {/* System Status */}
         {health && (
-          <div className="glass-panel p-6 rounded-xl">
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-cyan-400" />
+          <AnimatedCard className="glass-panel p-6 rounded-xl" from="bottom">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: '#E6E1D7' }}>
+              <AlertCircle className="w-5 h-5" style={{ color: '#F6AA1C' }} />
               System Status
             </h3>
             <div className="grid md:grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
-                <span className="text-slate-300">API Status</span>
+              <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'rgba(98, 23, 8, 0.3)' }}>
+                <span style={{ color: '#B8B3A8' }}>API Status</span>
                 <span className="text-green-400 font-mono">{health.status}</span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
-                <span className="text-slate-300">Version</span>
-                <span className="text-cyan-400 font-mono">{health.version}</span>
+              <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'rgba(98, 23, 8, 0.3)' }}>
+                <span style={{ color: '#B8B3A8' }}>Version</span>
+                <span className="font-mono" style={{ color: '#F6AA1C' }}>{health.version}</span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
-                <span className="text-slate-300">Database</span>
+              <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'rgba(98, 23, 8, 0.3)' }}>
+                <span style={{ color: '#B8B3A8' }}>Database</span>
                 <span className={health.database_connected ? "text-green-400" : "text-red-400"}>
                   {health.database_connected ? "Connected" : "Disconnected"}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
-                <span className="text-slate-300">Codex CLI</span>
+              <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'rgba(98, 23, 8, 0.3)' }}>
+                <span style={{ color: '#B8B3A8' }}>Codex CLI</span>
                 <span className={health.codex_available ? "text-green-400" : "text-amber-400"}>
                   {health.codex_available ? "Available" : "Not Available"}
                 </span>
               </div>
             </div>
-          </div>
+          </AnimatedCard>
         )}
       </main>
 
+      {/* Tech Stack Marquee */}
+      <div className="py-12 border-t border-b" style={{ borderColor: '#4A1812' }}>
+        <div className="mb-6 text-center">
+          <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: '#8A8780' }}>
+            Powered By
+          </p>
+        </div>
+        <InfiniteScroll speed={40} direction="left">
+          <div className="flex items-center gap-12 px-6">
+            {['OpenAI Codex', 'GPT-5.6', 'Semgrep', 'Python', 'FastAPI', 'Next.js', 'TypeScript', 'Tailwind CSS'].map((tech, idx) => (
+              <div 
+                key={idx} 
+                className="px-6 py-3 rounded-lg border"
+                style={{ 
+                  background: 'rgba(98, 23, 8, 0.3)',
+                  borderColor: 'rgba(246, 170, 28, 0.3)',
+                  color: '#F6AA1C'
+                }}
+              >
+                <span className="text-lg font-semibold font-mono">{tech}</span>
+              </div>
+            ))}
+          </div>
+        </InfiniteScroll>
+      </div>
+
       {/* Footer */}
-      <footer className="border-t border-slate-800 mt-20">
-        <div className="container mx-auto px-6 py-8 text-center text-slate-500 text-sm">
+      <footer className="border-t mt-20" style={{ borderColor: '#4A1812' }}>
+        <div className="container mx-auto px-6 py-8 text-center text-sm" style={{ color: '#8A8780' }}>
           <p>AutoFix Swarm v0.1.0 | Built for OpenAI Build Week</p>
           <p className="mt-2">Powered by Codex + GPT-5.6</p>
         </div>
       </footer>
+      </div>
     </div>
   );
 }
