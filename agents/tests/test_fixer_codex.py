@@ -621,10 +621,14 @@ class TestCodexFixer:
                 second = Path(cwd) / "src/autofix_seed/inventory.py"
                 if second.exists():
                     content2 = second.read_text(encoding="utf-8")
-                    content2 = content2.replace(
-                        "range(len(quantities) - 1)",
-                        "range(len(quantities))"
-                    )
+                    vulnerable2 = "range(len(quantities) - 1)"
+                    if vulnerable2 in content2:
+                        content2 = content2.replace(vulnerable2, "range(len(quantities))")
+                    else:
+                        # seeded_repo may already have the off-by-one fixed;
+                        # still touch the file so it registers as a second
+                        # changed file for this rejection test.
+                        content2 += "\n# autofix: off-by-one already fixed\n"
                     second.write_text(content2, encoding="utf-8")
                 return CodexRunnerResult(
                     exit_code=0, stdout="", stderr="",
