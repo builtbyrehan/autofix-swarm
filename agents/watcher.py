@@ -8,6 +8,7 @@ It uses two detection methods:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import time
@@ -482,6 +483,12 @@ class Watcher:
         if not isinstance(items, list):
             return issues
 
+        # issue_id must be unique across the whole scan, not just this file -
+        # it's a global PRIMARY KEY in the issues table. Resetting to 001 for
+        # every file caused later files to silently overwrite earlier files'
+        # issues that happened to land on the same number (INSERT OR REPLACE).
+        file_prefix = hashlib.sha1(file_path.encode("utf-8")).hexdigest()[:8]
+
         for idx, item in enumerate(items):
             if not isinstance(item, dict):
                 continue
@@ -529,7 +536,7 @@ class Watcher:
 
             issues.append(
                 Issue(
-                    id=f"gpt_{idx + 1:03d}",
+                    id=f"gpt_{file_prefix}_{idx + 1:03d}",
                     file=file_path,
                     line_range={"start": start, "end": end},
                     description=description,
