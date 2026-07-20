@@ -22,6 +22,84 @@ const STAGES = [
   },
 ];
 
+// Swap this for a video you own the rights to before shipping publicly.
+const HERO_VIDEO_SRC =
+  "https://stream.mux.com/tLkHO1qZoaaQOUeVWo8hEBeGQfySP02EPS02BmnNFyXys.m3u8";
+
+function HeroVideo() {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    let hls: import("hls.js").default | null = null;
+    let cancelled = false;
+
+    async function load() {
+      if (!video) return;
+
+      if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        // Safari plays HLS natively — no hls.js needed.
+        video.src = HERO_VIDEO_SRC;
+        return;
+      }
+
+      try {
+        const { default: Hls } = await import("hls.js");
+        if (cancelled || !video) return;
+
+        if (Hls.isSupported()) {
+          hls = new Hls({ enableWorker: false });
+          hls.loadSource(HERO_VIDEO_SRC);
+          hls.attachMedia(video);
+        }
+      } catch {
+        // hls.js failed to load — the orb-glow layer beneath still carries the hero.
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+      hls?.destroy();
+    };
+  }, []);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        loop
+        playsInline
+        onCanPlay={() => setReady(true)}
+        className={`h-full w-full object-cover transition-opacity duration-1000 ${
+          ready ? "opacity-60" : "opacity-0"
+        }`}
+      />
+      {/* Left-to-transparent gradient so headline text stays legible over the video */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(90deg, #050505 0%, rgba(5,5,5,0.8) 32%, rgba(5,5,5,0.4) 62%, transparent 100%)",
+        }}
+      />
+      {/* Bottom-up gradient */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: "linear-gradient(0deg, #050505 0%, rgba(5,5,5,0.65) 24%, transparent 55%)",
+        }}
+      />
+    </div>
+  );
+}
+
+
 function Nav() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -91,6 +169,7 @@ export default function Home() {
 
       {/* HERO */}
       <section className="relative flex min-h-[100svh] w-full flex-col overflow-hidden bg-[#050505]">
+        <HeroVideo />
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
           <div className="absolute -right-20 top-[15%] h-[400px] w-[400px] rounded-full opacity-[0.12]" style={{ background: "radial-gradient(circle, #fbbf24 0%, transparent 70%)", animation: "orb-drift-1 18s ease-in-out infinite", filter: "blur(60px)" }} />
           <div className="absolute -left-10 top-[40%] h-[350px] w-[350px] rounded-full opacity-[0.08]" style={{ background: "radial-gradient(circle, #d97706 0%, transparent 70%)", animation: "orb-drift-2 22s ease-in-out infinite", filter: "blur(50px)" }} />
