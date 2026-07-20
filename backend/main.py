@@ -1231,13 +1231,10 @@ async def delete_cached_demo(run_id: str):
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     """Global exception handler for unhandled errors."""
+    print(f"[error] Unhandled exception on {request.url.path}: {type(exc).__name__}: {exc}")
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={
-            "error": "Internal server error",
-            "detail": str(exc),
-            "type": type(exc).__name__,
-        },
+        content={"error": "Internal server error"},
     )
 
 
