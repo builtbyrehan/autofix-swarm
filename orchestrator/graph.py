@@ -125,11 +125,12 @@ class Pipeline:
         self.fixer: Optional[CodexFixer] = None
         self.reviewer: Optional[Reviewer] = None
 
-    def run(self, config: PipelineConfig) -> PipelineState:
+    def run(self, config: PipelineConfig, run_id: Optional[str] = None) -> PipelineState:
         """Run the complete pipeline.
 
         Args:
             config: Pipeline configuration
+            run_id: Optional externally-provided run ID. If None, generates one.
 
         Returns:
             PipelineState with all results
@@ -138,7 +139,8 @@ class Pipeline:
             PipelineError: If pipeline execution fails
         """
         # Initialize state
-        run_id = str(uuid.uuid4())
+        if run_id is None:
+            run_id = str(uuid.uuid4())
         state = PipelineState(run_id=run_id, config=config)
 
         try:
@@ -312,14 +314,15 @@ def create_pipeline() -> Pipeline:
     return Pipeline()
 
 
-def run_pipeline(config: PipelineConfig) -> PipelineState:
+def run_pipeline(config: PipelineConfig, run_id: Optional[str] = None) -> PipelineState:
     """Convenience function to create and run a pipeline.
 
     Args:
         config: Pipeline configuration
+        run_id: Optional externally-provided run ID
 
     Returns:
         PipelineState with results
     """
     pipeline = create_pipeline()
-    return pipeline.run(config)
+    return pipeline.run(config, run_id=run_id)

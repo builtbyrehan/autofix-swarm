@@ -1,8 +1,12 @@
 [build-system]
-requires = ["setuptools>=75"]
+requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
+
+
 [tool.setuptools.packages.find]
-include = ["backend*", "agents*"]
+include = ["backend*", "agents*", "orchestrator*", "sandbox*", "eval*"]
+
+
 [project]
 name = "autofix-swarm"
 version = "0.1.0"
@@ -10,24 +14,25 @@ description = "Evaluated, sandboxed bug detection and remediation agents"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.115.0,<0.116",
-    "uvicorn[standard]>=0.32.0,<0.33",
-    "pydantic>=2.9.0,<3.0",
-    "pydantic-settings>=2.6.0,<3.0",
-    "openai>=1.54.0,<2.0",
-    "langgraph>=0.2.45,<0.3",
-    "langchain-core>=0.3.15,<0.4",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
+    "openai>=1.54.0",
+    "langgraph>=0.2.45",
+    "langchain-core>=0.3.15",
+    "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]
 test = [
-    "pytest>=8.3,<9",
-    "httpx>=0.27.0,<0.28",
+    "pytest>=8.3",
+    "httpx>=0.27.0",
 ]
 
 [tool.pytest.ini_options]
-pythonpath = ["seeded_repo/src", "agents"]
-testpaths = ["seeded_repo/tests", "agents/tests", "eval/tests", "sandbox/tests"]
+pythonpath = ["seeded_repo/src", "agents", "sandbox"]
+testpaths = ["seeded_repo/tests", "agents/tests", "backend/tests", "eval/tests", "sandbox/tests"]
 addopts = "-q"
 markers = [
     "integration: tests that require a working Docker daemon",

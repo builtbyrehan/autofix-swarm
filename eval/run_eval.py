@@ -28,7 +28,11 @@ def load_json(path: Path) -> Any:
 
 
 def normalized_repo_path(value: str) -> str:
-    normalized = str(PurePosixPath(value.replace("\\", "/"))).lstrip("./")
+    normalized = str(PurePosixPath(value.replace("\\", "/")))
+    if normalized.startswith("./"):
+        normalized = normalized[2:]
+    elif normalized.startswith("/"):
+        normalized = normalized.lstrip("/")
     if normalized.startswith("seeded_repo/"):
         normalized = normalized.removeprefix("seeded_repo/")
     return normalized

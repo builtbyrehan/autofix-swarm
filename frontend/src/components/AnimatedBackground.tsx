@@ -44,6 +44,8 @@ const AnimatedBackground = () => {
       });
     }
 
+    let frameId: number;
+
     const animate = () => {
       ctx.fillStyle = 'rgba(34, 9, 1, 0.05)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -81,12 +83,13 @@ const AnimatedBackground = () => {
       });
 
       ctx.globalAlpha = 1;
-      requestAnimationFrame(animate);
+      frameId = requestAnimationFrame(animate);
     };
 
-    animate();
+    frameId = requestAnimationFrame(animate);
 
     return () => {
+      cancelAnimationFrame(frameId);
       window.removeEventListener('resize', setCanvasSize);
     };
   }, []);

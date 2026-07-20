@@ -6,13 +6,15 @@ endpoints to trigger scans, fixes, verifications, and retrieve results.
 
 from __future__ import annotations
 
+import shutil
 import time
 import uuid
-from datetime import datetime
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, AsyncGenerator, Optional
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import Body, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -37,12 +39,26 @@ from backend.models import (
 # FastAPI App Initialization
 # ---------------------------------------------------------------------------
 
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Application lifespan: startup then shutdown."""
+    print("[startup] AutoFix Swarm API starting...")
+    print(f"[startup] Target repo: {settings.target_repo_path_resolved}")
+    print(f"[startup] Database: {db.db_path}")
+    print(f"[startup] Codex available: {_check_codex_available()}")
+    print(f"[startup] GPT-5.6 configured: {_check_gpt_available()}")
+    print(f"[startup] API docs: http://{settings.api_host}:{settings.api_port}/docs")
+    yield
+    print("[shutdown] AutoFix Swarm API shutting down...")
+
+
 app = FastAPI(
     title="AutoFix Swarm API",
     description="Autonomous bug detection and remediation agents",
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # Add CORS middleware
@@ -156,7 +172,7 @@ async def scan_repository(request: ScanRequest):
         print(f"[SCAN] Repo path: {repo_path}")
 
         watcher = Watcher(config=watcher_config)
-        print(f"[SCAN] Semgrep available: {watcher._check_semgrep_available()}")
+        print(f"[SCAN] Semgrep available: {Watcher._check_semgrep_available()}")
 
         result = watcher.scan(repo_path)
         print(f"[SCAN] Result: semgrep={result.semgrep_count}, gpt={result.gpt_count}, total={result.total_count}")
@@ -236,7 +252,7 @@ async def fix_issue(request: FixRequest):
 
         result = fixer.fix(
             issue=issue_data,
-            repo_path=settings.target_repo_path,
+            repo_path=_get_repo_path(),
             artifacts_dir=settings.artifacts_dir,
         )
 
@@ -301,9 +317,21 @@ async def verify_fix(request: VerifyRequest):
     verdict_id = str(uuid.uuid4())
 
     try:
-        # Fetch fix from database
-        # TODO: Implement database query for fix by fix_id
-        # For now, assume repo_path and other data are available
+        # Fetch fix from database to get issue details
+        fixes = db.get_fixes_by_fix_id(request.fix_id)
+        if not fixes:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Fix not found: {request.fix_id}",
+            )
+
+        fix_data = fixes[0]
+        issue_id = fix_data["issue_id"]
+        diff_text = fix_data.get("diff_text") or ""
+
+        # Get issue description from database
+        issues = db.get_issue_by_id(issue_id)
+        issue_description = issues[0]["description"] if issues else ""
 
         # Run Reviewer agent
         from agents.reviewer import Reviewer, ReviewerConfig
@@ -315,12 +343,11 @@ async def verify_fix(request: VerifyRequest):
         )
         reviewer = Reviewer(config=reviewer_config)
 
-        # TODO: Get actual issue_id, diff, and description from fix record
         result = reviewer.verify(
-            issue_id="unknown",
-            repo_path=settings.target_repo_path,
-            diff="",  # Should come from fix record
-            issue_description="",
+            issue_id=issue_id,
+            repo_path=_get_repo_path(),
+            diff=diff_text,
+            issue_description=issue_description,
         )
 
         # Save verdict to database
@@ -388,7 +415,7 @@ async def run_pipeline(request: PipelineRunRequest):
 
     # Create pipeline run in database
     config = request.model_dump()
-    db.create_pipeline_run(str(repo_path), config)
+    db.create_pipeline_run(str(repo_path), config, run_id=run_id)
 
     try:
         # Run full pipeline using orchestrator
@@ -407,7 +434,7 @@ async def run_pipeline(request: PipelineRunRequest):
         )
 
         pipeline = Pipeline()
-        state = pipeline.run(pipeline_config)
+        state = pipeline.run(pipeline_config, run_id=run_id)
 
         # Save all results to database
         # Save issues
@@ -425,10 +452,13 @@ async def run_pipeline(request: PipelineRunRequest):
                     detectors=issue.detectors,
                 )
 
-        # Save fixes
+        # Save fixes — track fix_id per issue for verdict linking
+        issue_to_fix_id: dict[str, str] = {}
         for fix_result in state.fix_results:
+            fix_id = str(uuid.uuid4())
+            issue_to_fix_id[fix_result.issue_id] = fix_id
             db.save_fix(
-                fix_id=str(uuid.uuid4()),
+                fix_id=fix_id,
                 issue_id=fix_result.issue_id,
                 run_id=run_id,
                 status=fix_result.status,
@@ -443,11 +473,12 @@ async def run_pipeline(request: PipelineRunRequest):
                 failure_reason=fix_result.failure_reason,
             )
 
-        # Save verdicts
+        # Save verdicts — link to fix_id via issue_id
         for review_result in state.review_results:
+            fix_id = issue_to_fix_id.get(review_result.verdict.issue_id, "")
             db.save_verdict(
                 verdict_id=str(uuid.uuid4()),
-                fix_id="",  # Would need to link to fix_id from earlier
+                fix_id=fix_id,
                 issue_id=review_result.verdict.issue_id,
                 run_id=run_id,
                 status="succeeded",
@@ -539,6 +570,387 @@ async def run_pipeline(request: PipelineRunRequest):
         )
 
 
+# ---------------------------------------------------------------------------
+# Custom Code Pipeline Endpoints
+# ---------------------------------------------------------------------------
+
+
+@app.post("/run/custom", response_model=PipelineRunResponse, tags=["Pipeline"])
+async def run_custom_pipeline(request_body: Optional[dict[str, Any]] = Body(default=None)):
+    """Run pipeline against custom (pasted) code.
+
+    Accepts code content, writes it to a temporary directory, then
+    runs the full scan pipeline against it.
+
+    Returns:
+        PipelineRunResponse with results
+    """
+    if request_body is None:
+        request_body = {}
+
+    code = request_body.get("code", "")
+    language = request_body.get("language", "python")
+    use_semgrep = request_body.get("use_semgrep", True)
+    use_gpt = request_body.get("use_gpt", True)
+
+    if not code or not code.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No code provided for analysis",
+        )
+
+    start_time = time.monotonic()
+    run_id = str(uuid.uuid4())
+
+    # Write custom code to a temporary repo directory
+    import tempfile
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="autofix-custom-"))
+    try:
+        # Create a source file with the pasted code
+        ext_map = {
+            "python": ".py",
+            "javascript": ".js",
+            "typescript": ".ts",
+            "go": ".go",
+            "rust": ".rs",
+            "java": ".java",
+            "c": ".c",
+            "cpp": ".cpp",
+            "solidity": ".sol",
+        }
+        ext = ext_map.get(language, ".py")
+        src_file = tmp_dir / f"custom_code{ext}"
+        src_file.write_text(code, encoding="utf-8")
+
+        # Create minimal __init__.py for Python
+        if language == "python":
+            (tmp_dir / "__init__.py").write_text("")
+
+        repo_path = tmp_dir
+
+        # Create pipeline run
+        config = {
+            "use_semgrep": use_semgrep and language == "python",
+            "use_gpt": use_gpt,
+            "source": "custom_code",
+            "language": language,
+        }
+        db.create_pipeline_run(str(repo_path), config, run_id=run_id)
+
+        # Run watcher scan (only Semgrep for Python, GPT for all)
+        from agents.watcher import Watcher, WatcherConfig
+
+        raw_max = request_body.get("max_issues")
+        max_issues = int(raw_max) if raw_max is not None else None
+
+        watcher_config = WatcherConfig(
+            use_semgrep=use_semgrep and language == "python",
+            use_gpt=use_gpt,
+            max_issues=max_issues,
+            openai_api_key=settings.openai_api_key,
+            openai_base_url=settings.openai_base_url,
+            openai_model=settings.openai_model,
+        )
+
+        watcher = Watcher(config=watcher_config)
+        result = watcher.scan(repo_path)
+
+        # Save issues
+        for issue in result.issues:
+            db.save_issue(
+                issue_id=issue.id,
+                run_id=run_id,
+                file=issue.file,
+                line_start=issue.line_range["start"],
+                line_end=issue.line_range["end"],
+                description=issue.description,
+                severity=issue.severity,
+                confidence=issue.confidence,
+                detectors=issue.detectors,
+            )
+
+        duration = time.monotonic() - start_time
+
+        # Update pipeline run
+        db.update_pipeline_run(
+            run_id=run_id,
+            status="completed",
+            issues_found=result.total_count,
+            total_duration_seconds=duration,
+        )
+
+        return PipelineRunResponse(
+            run_id=run_id,
+            status=PipelineStatus.COMPLETED,
+            issues_found=result.total_count,
+            fixes_attempted=0,
+            fixes_succeeded=0,
+            verifications_passed=0,
+            total_duration_seconds=duration,
+            message=f"Custom code scan complete: {result.total_count} issues found",
+        )
+
+    except Exception as e:
+        db.update_pipeline_run(
+            run_id=run_id,
+            status="failed",
+            total_duration_seconds=time.monotonic() - start_time,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Custom pipeline failed: {str(e)}",
+        )
+    finally:
+        # Clean up temp directory
+        try:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+        except Exception:
+            pass
+
+
+@app.post("/run/custom/upload", response_model=PipelineRunResponse, tags=["Pipeline"])
+async def run_custom_pipeline_upload(file: UploadFile = File(...)):
+    """Run pipeline against an uploaded code file.
+
+    Accepts multipart form data with a 'file' field, writes it to a
+    temporary directory, then runs the scan pipeline against it.
+
+    Returns:
+        PipelineRunResponse with results
+    """
+    import tempfile
+
+    start_time = time.monotonic()
+    run_id = str(uuid.uuid4())
+
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No filename provided",
+        )
+
+    # Determine language from extension
+    ext_map = {
+        ".py": "python", ".js": "javascript", ".ts": "typescript",
+        ".go": "go", ".rs": "rust", ".java": "java",
+        ".c": "c", ".cpp": "cpp", ".sol": "solidity",
+        ".tsx": "typescript", ".jsx": "javascript",
+    }
+    suffix = Path(file.filename).suffix.lower()
+    language = ext_map.get(suffix, "python")
+
+    # Write uploaded content to temp directory
+    tmp_dir = Path(tempfile.mkdtemp(prefix="autofix-upload-"))
+    try:
+        content = await file.read()
+        src_file = tmp_dir / file.filename
+        src_file.write_bytes(content)
+
+        # Create __init__.py for Python
+        if language == "python":
+            (tmp_dir / "__init__.py").write_text("")
+
+        repo_path = tmp_dir
+
+        # Create pipeline run
+        config = {
+            "use_semgrep": language == "python",
+            "use_gpt": True,
+            "source": "upload",
+            "language": language,
+            "filename": file.filename,
+        }
+        db.create_pipeline_run(str(repo_path), config, run_id=run_id)
+
+        # Run watcher scan
+        from agents.watcher import Watcher, WatcherConfig
+
+        watcher_config = WatcherConfig(
+            use_semgrep=language == "python",
+            use_gpt=True,
+            openai_api_key=settings.openai_api_key,
+            openai_base_url=settings.openai_base_url,
+            openai_model=settings.openai_model,
+        )
+
+        watcher = Watcher(config=watcher_config)
+        result = watcher.scan(repo_path)
+
+        # Save issues
+        for issue in result.issues:
+            db.save_issue(
+                issue_id=issue.id,
+                run_id=run_id,
+                file=issue.file,
+                line_start=issue.line_range["start"],
+                line_end=issue.line_range["end"],
+                description=issue.description,
+                severity=issue.severity,
+                confidence=issue.confidence,
+                detectors=issue.detectors,
+            )
+
+        duration = time.monotonic() - start_time
+
+        # Update pipeline run
+        db.update_pipeline_run(
+            run_id=run_id,
+            status="completed",
+            issues_found=result.total_count,
+            total_duration_seconds=duration,
+        )
+
+        return PipelineRunResponse(
+            run_id=run_id,
+            status=PipelineStatus.COMPLETED,
+            issues_found=result.total_count,
+            fixes_attempted=0,
+            fixes_succeeded=0,
+            verifications_passed=0,
+            total_duration_seconds=duration,
+            message=f"Upload scan complete: {result.total_count} issues found in {file.filename}",
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.update_pipeline_run(
+            run_id=run_id,
+            status="failed",
+            total_duration_seconds=time.monotonic() - start_time,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Upload pipeline failed: {str(e)}",
+        )
+    finally:
+        try:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+        except Exception:
+            pass
+
+
+# Legacy upload endpoint (kept for the dashboard's direct /upload call)
+@app.post("/upload", tags=["Pipeline"])
+async def upload_and_scan(file: UploadFile = File(...)):
+    """Upload a code file and run analysis.
+
+    Args:
+        file: Uploaded code file
+
+    Returns:
+        Analysis results with issue count
+    """
+    import tempfile
+
+    start_time = time.monotonic()
+    run_id = str(uuid.uuid4())
+
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No filename provided",
+        )
+
+    # Determine language from extension
+    ext_map = {
+        ".py": "python", ".js": "javascript", ".ts": "typescript",
+        ".go": "go", ".rs": "rust", ".java": "java",
+        ".c": "c", ".cpp": "cpp", ".sol": "solidity",
+        ".tsx": "typescript", ".jsx": "javascript",
+    }
+    suffix = Path(file.filename).suffix.lower()
+    language = ext_map.get(suffix, "python")
+
+    # Write uploaded content to temp directory
+    tmp_dir = Path(tempfile.mkdtemp(prefix="autofix-upload-"))
+    try:
+        content = await file.read()
+        src_file = tmp_dir / file.filename
+        src_file.write_bytes(content)
+
+        # Create __init__.py for Python
+        if language == "python":
+            (tmp_dir / "__init__.py").write_text("")
+
+        repo_path = tmp_dir
+
+        # Create pipeline run
+        config = {
+            "use_semgrep": language == "python",
+            "use_gpt": True,
+            "source": "upload",
+            "language": language,
+            "filename": file.filename,
+        }
+        db.create_pipeline_run(str(repo_path), config, run_id=run_id)
+
+        # Run watcher scan
+        from agents.watcher import Watcher, WatcherConfig
+
+        watcher_config = WatcherConfig(
+            use_semgrep=language == "python",
+            use_gpt=True,
+            openai_api_key=settings.openai_api_key,
+            openai_base_url=settings.openai_base_url,
+            openai_model=settings.openai_model,
+        )
+
+        watcher = Watcher(config=watcher_config)
+        result = watcher.scan(repo_path)
+
+        # Save issues
+        for issue in result.issues:
+            db.save_issue(
+                issue_id=issue.id,
+                run_id=run_id,
+                file=issue.file,
+                line_start=issue.line_range["start"],
+                line_end=issue.line_range["end"],
+                description=issue.description,
+                severity=issue.severity,
+                confidence=issue.confidence,
+                detectors=issue.detectors,
+            )
+
+        duration = time.monotonic() - start_time
+
+        # Update pipeline run
+        db.update_pipeline_run(
+            run_id=run_id,
+            status="completed",
+            issues_found=result.total_count,
+            total_duration_seconds=duration,
+        )
+
+        return {
+            "run_id": run_id,
+            "issues_found": result.total_count,
+            "filename": file.filename,
+            "language": language,
+            "duration_seconds": duration,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.update_pipeline_run(
+            run_id=run_id,
+            status="failed",
+            total_duration_seconds=time.monotonic() - start_time,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Upload analysis failed: {str(e)}",
+        )
+    finally:
+        try:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+        except Exception:
+            pass
+
+
 @app.get("/results/latest", response_model=PipelineResult, tags=["Results"])
 async def get_latest_results():
     """Get the most recent pipeline run results.
@@ -557,12 +969,14 @@ async def get_latest_results():
             detail="No pipeline runs found",
         )
 
-    # Parse and return full result
-    # TODO: Implement full result assembly from database
     return PipelineResult(
         run_id=run_data["run_id"],
         status=PipelineStatus(run_data["status"]),
-        total_duration_seconds=run_data.get("total_duration_seconds", 0.0),
+        issues_found=run_data.get("issues_found") or 0,
+        fixes_attempted=run_data.get("fixes_attempted") or 0,
+        fixes_succeeded=run_data.get("fixes_succeeded") or 0,
+        verifications_passed=run_data.get("verifications_passed") or 0,
+        total_duration_seconds=run_data.get("total_duration_seconds") or 0.0,
         started_at=datetime.fromisoformat(run_data["started_at"]),
         completed_at=(
             datetime.fromisoformat(run_data["completed_at"])
@@ -593,12 +1007,14 @@ async def get_results(run_id: str):
             detail=f"Pipeline run not found: {run_id}",
         )
 
-    # Parse and return full result
-    # TODO: Implement full result assembly from database
     return PipelineResult(
         run_id=run_data["run_id"],
         status=PipelineStatus(run_data["status"]),
-        total_duration_seconds=run_data.get("total_duration_seconds", 0.0),
+        issues_found=run_data.get("issues_found") or 0,
+        fixes_attempted=run_data.get("fixes_attempted") or 0,
+        fixes_succeeded=run_data.get("fixes_succeeded") or 0,
+        verifications_passed=run_data.get("verifications_passed") or 0,
+        total_duration_seconds=run_data.get("total_duration_seconds") or 0.0,
         started_at=datetime.fromisoformat(run_data["started_at"]),
         completed_at=(
             datetime.fromisoformat(run_data["completed_at"])
@@ -617,11 +1033,27 @@ async def get_issues(run_id: str):
 
     Returns:
         List of issues with details
-
-    Raises:
-        HTTPException: If run_id not found
     """
-    issues = db.get_issues(run_id)
+    import json as _json
+
+    rows = db.get_issues(run_id)
+    issues = []
+    for row in rows:
+        detectors = row.get("detectors", "[]")
+        if isinstance(detectors, str):
+            try:
+                detectors = _json.loads(detectors)
+            except Exception:
+                detectors = []
+        issues.append({
+            "id": row["issue_id"],
+            "file": row["file"],
+            "line_range": {"start": row["line_start"], "end": row["line_end"]},
+            "description": row["description"],
+            "severity": row["severity"],
+            "confidence": row["confidence"],
+            "detectors": detectors,
+        })
     return {"run_id": run_id, "issues": issues, "count": len(issues)}
 
 
@@ -634,11 +1066,31 @@ async def get_fixes(run_id: str):
 
     Returns:
         List of fixes with status and details
-
-    Raises:
-        HTTPException: If run_id not found
     """
-    fixes = db.get_fixes(run_id)
+    import json as _json
+
+    rows = db.get_fixes(run_id)
+    fixes = []
+    for row in rows:
+        changed_files = row.get("changed_files", "[]")
+        if isinstance(changed_files, str):
+            try:
+                changed_files = _json.loads(changed_files)
+            except Exception:
+                changed_files = []
+        fixes.append({
+            "fix_id": row["fix_id"],
+            "issue_id": row["issue_id"],
+            "status": row["status"],
+            "codex_live": bool(row["codex_live"]),
+            "summary": row["summary"],
+            "changed_files": changed_files,
+            "diff_preview": (row.get("diff_text") or "")[:500] if row.get("diff_text") else "",
+            "artifact_path": row.get("artifact_path"),
+            "duration_seconds": row["duration_seconds"],
+            "failure_reason": row.get("failure_reason", ""),
+            "timestamp": row.get("created_at", ""),
+        })
     return {"run_id": run_id, "fixes": fixes, "count": len(fixes)}
 
 
@@ -651,11 +1103,21 @@ async def get_verdicts(run_id: str):
 
     Returns:
         List of verdicts with test results and explanations
-
-    Raises:
-        HTTPException: If run_id not found
     """
-    verdicts = db.get_verdicts(run_id)
+    rows = db.get_verdicts(run_id)
+    verdicts = []
+    for row in rows:
+        verdicts.append({
+            "verdict_id": row["verdict_id"],
+            "fix_id": row["fix_id"],
+            "issue_id": row["issue_id"],
+            "status": row["status"],
+            "tests_passed": bool(row["tests_passed"]),
+            "explanation": row["explanation"],
+            "confidence": row["confidence"],
+            "duration_seconds": row["duration_seconds"],
+            "timestamp": row.get("created_at", ""),
+        })
     return {"run_id": run_id, "verdicts": verdicts, "count": len(verdicts)}
 
 
@@ -731,7 +1193,7 @@ async def cache_pipeline_run(run_id: str):
         "issues": issues,
         "fixes": fixes,
         "verdicts": verdicts,
-        "cached_at": datetime.utcnow().isoformat(),
+        "cached_at": datetime.now(timezone.utc).isoformat(),
     }
 
     cache_path = demo_cache.save_run(run_id, pipeline_state, settings.artifacts_dir)
@@ -777,28 +1239,6 @@ async def global_exception_handler(request, exc):
             "type": type(exc).__name__,
         },
     )
-
-
-# ---------------------------------------------------------------------------
-# Application lifecycle
-# ---------------------------------------------------------------------------
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize application on startup."""
-    print("🚀 AutoFix Swarm API starting...")
-    print(f"📁 Target repo: {settings.target_repo_path_resolved}")
-    print(f"💾 Database: {db.db_path}")
-    print(f"🔧 Codex available: {_check_codex_available()}")
-    print(f"🤖 GPT-5.6 configured: {_check_gpt_available()}")
-    print(f"🌐 API docs: http://{settings.api_host}:{settings.api_port}/docs")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on application shutdown."""
-    print("👋 AutoFix Swarm API shutting down...")
 
 
 # ---------------------------------------------------------------------------

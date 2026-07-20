@@ -561,7 +561,9 @@ def _validate_issue(issue: Any, repo_path: Path) -> FixRequest:
         raise InvalidIssueError("file must be a non-empty string")
     if os.path.isabs(rel_path):
         raise InvalidIssueError(f"absolute file path not allowed: {rel_path!r}")
-    if ".." in rel_path.split(os.sep):
+    # Normalize to forward slashes for cross-platform path traversal check
+    normalized = rel_path.replace("\\", "/")
+    if ".." in normalized.split("/"):
         raise InvalidIssueError(f"path traversal detected in file: {rel_path!r}")
 
     resolved = (repo_path / rel_path).resolve()

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
@@ -92,7 +92,7 @@ class DemoCache:
         index = self._read_index()
         run_entry = {
             "run_id": run_id,
-            "cached_at": datetime.utcnow().isoformat(),
+            "cached_at": datetime.now(timezone.utc).isoformat(),
             "status": pipeline_state.get("status", "unknown"),
             "issues_found": pipeline_state.get("issues_found", 0),
             "fixes_succeeded": pipeline_state.get("fixes_succeeded", 0),
@@ -157,6 +157,10 @@ class DemoCache:
             True if deleted, False if not found
         """
         run_dir = self.cache_dir / run_id
+        existed = run_dir.exists() or any(
+            r.get("run_id") == run_id for r in self._read_index().get("runs", [])
+        )
+
         if run_dir.exists():
             shutil.rmtree(run_dir)
 
@@ -165,7 +169,7 @@ class DemoCache:
         if index.get("latest_run_id") == run_id:
             index["latest_run_id"] = index["runs"][-1]["run_id"] if index["runs"] else None
         self._write_index(index)
-        return True
+        return existed
 
     def has_cached_run(self) -> bool:
         """Check if any cached runs exist."""

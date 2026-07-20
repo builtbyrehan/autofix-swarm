@@ -6,12 +6,12 @@ import json
 import sqlite3
 import uuid
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Generator, Optional
 
 from backend.config import settings
-from backend.models import AgentLog, AgentStatus
+from backend.models import AgentStatus
 
 
 class Database:
@@ -134,17 +134,20 @@ class Database:
         self,
         repo_path: str,
         config: dict[str, Any],
+        run_id: Optional[str] = None,
     ) -> str:
         """Create a new pipeline run entry.
 
         Args:
             repo_path: Path to the target repository
             config: Configuration dictionary for this run
+            run_id: Optional external run ID. If None, generates one.
 
         Returns:
             run_id: Unique identifier for this pipeline run
         """
-        run_id = str(uuid.uuid4())
+        if run_id is None:
+            run_id = str(uuid.uuid4())
         with self._get_connection() as conn:
             conn.execute(
                 """
@@ -157,7 +160,7 @@ class Database:
                     "idle",
                     repo_path,
                     json.dumps(config),
-                    datetime.utcnow().isoformat(),
+                    datetime.now(timezone.utc).isoformat(),
                 ),
             )
         return run_id
@@ -195,7 +198,7 @@ class Database:
             updates.append("total_duration_seconds = ?")
             params.append(total_duration_seconds)
             updates.append("completed_at = ?")
-            params.append(datetime.utcnow().isoformat())
+            params.append(datetime.now(timezone.utc).isoformat())
 
         if not updates:
             return
@@ -238,7 +241,7 @@ class Database:
                     json.dumps(output_data),
                     duration_seconds,
                     error_message,
-                    datetime.utcnow().isoformat(),
+                    datetime.now(timezone.utc).isoformat(),
                 ),
             )
             return cursor.lastrowid
@@ -274,7 +277,7 @@ class Database:
                     severity,
                     confidence,
                     json.dumps(detectors),
-                    datetime.utcnow().isoformat(),
+                    datetime.now(timezone.utc).isoformat(),
                 ),
             )
 
@@ -314,7 +317,7 @@ class Database:
                     artifact_path,
                     duration_seconds,
                     failure_reason,
-                    datetime.utcnow().isoformat(),
+                    datetime.now(timezone.utc).isoformat(),
                 ),
             )
 
@@ -349,7 +352,7 @@ class Database:
                     explanation,
                     confidence,
                     duration_seconds,
-                    datetime.utcnow().isoformat(),
+                    datetime.now(timezone.utc).isoformat(),
                 ),
             )
 
@@ -423,6 +426,30 @@ class Database:
                 ORDER BY created_at ASC
                 """,
                 (run_id,),
+            ).fetchall()
+            return [dict(row) for row in rows]
+
+    def get_fixes_by_fix_id(self, fix_id: str) -> list[dict[str, Any]]:
+        """Get fix details by fix_id."""
+        with self._get_connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT * FROM fixes
+                WHERE fix_id = ?
+                """,
+                (fix_id,),
+            ).fetchall()
+            return [dict(row) for row in rows]
+
+    def get_issue_by_id(self, issue_id: str) -> list[dict[str, Any]]:
+        """Get issue details by issue_id."""
+        with self._get_connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT * FROM issues
+                WHERE issue_id = ?
+                """,
+                (issue_id,),
             ).fetchall()
             return [dict(row) for row in rows]
 
