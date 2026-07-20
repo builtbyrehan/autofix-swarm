@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import {
   Bug, Wrench, CheckCircle2, XCircle, Clock, ArrowLeft,
   RefreshCw, Play, TrendingUp, AlertTriangle, Code, Activity, Shield,
-  Target, Upload, FileText, Copy, Trash2, ChevronDown
+  Target, Upload, FileText, Copy, Trash2, ChevronDown, Check
 } from "lucide-react";
 import Link from "next/link";
 
@@ -19,6 +19,128 @@ const SEVERITY_STYLES: Record<string, string> = {
   medium: "text-amber-400 bg-amber-400/10 border-amber-400/30",
   low: "text-yellow-400 bg-yellow-400/10 border-yellow-400/30",
 };
+
+const LANGUAGES = [
+  { value: "python", label: "Python" },
+  { value: "javascript", label: "JavaScript" },
+  { value: "typescript", label: "TypeScript" },
+  { value: "go", label: "Go" },
+  { value: "rust", label: "Rust" },
+  { value: "java", label: "Java" },
+  { value: "c", label: "C" },
+  { value: "cpp", label: "C++" },
+  { value: "solidity", label: "Solidity" },
+];
+
+// Native <select> popups render with OS chrome that ignores the dark theme
+// (that's the white dropdown you saw) — Chrome/Windows in particular won't
+// take a background/border-radius on the options list. This is a fully
+// custom listbox instead, so every pixel of it follows brand-gold/glass.
+function LanguageSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [highlighted, setHighlighted] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  const selected = LANGUAGES.find((l) => l.value === value) ?? LANGUAGES[0];
+
+  useEffect(() => {
+    if (!open) return;
+    setHighlighted(Math.max(0, LANGUAGES.findIndex((l) => l.value === value)));
+
+    const onPointerDown = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open, value]);
+
+  const handleListKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlighted((i) => Math.min(i + 1, LANGUAGES.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlighted((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onChange(LANGUAGES[highlighted].value);
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpen(true);
+          }
+        }}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.08)] bg-white/5 pl-4 pr-3 py-2 font-mono text-sm text-[#fafafa] outline-none transition-all duration-200 cursor-pointer hover:border-brand-gold/50 hover:bg-brand-gold/[0.03] focus:border-brand-gold focus:shadow-[0_0_12px_-2px_rgba(251,191,36,0.2)]"
+      >
+        {selected.label}
+        <ChevronDown
+          className={`h-4 w-4 text-brand-gold transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          tabIndex={-1}
+          onKeyDown={handleListKeyDown}
+          className="scrollbar-slim animate-scale-in absolute left-0 top-[calc(100%+8px)] z-50 max-h-64 w-44 overflow-y-auto rounded-2xl border border-[rgba(255,255,255,0.1)] bg-[#0c0c0c]/95 p-1.5 shadow-2xl shadow-black/60 backdrop-blur-2xl"
+        >
+          {LANGUAGES.map((l, i) => {
+            const isSelected = l.value === value;
+            const isHighlighted = i === highlighted;
+            return (
+              <button
+                key={l.value}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                onMouseEnter={() => setHighlighted(i)}
+                onClick={() => {
+                  onChange(l.value);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left font-mono text-sm transition-colors duration-150 ${
+                  isSelected
+                    ? "bg-brand-gold/10 text-brand-gold"
+                    : isHighlighted
+                      ? "bg-white/[0.06] text-[#fafafa]"
+                      : "text-[#a3a3a3]"
+                }`}
+              >
+                {l.label}
+                {isSelected && <Check className="h-3.5 w-3.5 text-brand-gold" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const [isRunning, setIsRunning] = useState(false);
@@ -174,24 +296,7 @@ export default function Dashboard() {
             </h2>
             <div className="mb-4 flex items-center gap-3">
               <label className="font-sans text-xs font-medium uppercase tracking-wider text-[#a3a3a3]">Language:</label>
-              <div className="relative">
-                <select value={pasteLanguage} onChange={e => setPasteLanguage(e.target.value)} className="appearance-none rounded-full border border-[rgba(255,255,255,0.08)] bg-white/5 pl-4 pr-10 py-2 font-mono text-sm text-[#fafafa] outline-none transition-all duration-200 cursor-pointer hover:border-brand-gold/50 hover:bg-brand-gold/[0.03] focus:border-brand-gold focus:shadow-[0_0_12px_-2px_rgba(251,191,36,0.2)]">
-                  {[
-                    { value: "python", label: "Python" },
-                    { value: "javascript", label: "JavaScript" },
-                    { value: "typescript", label: "TypeScript" },
-                    { value: "go", label: "Go" },
-                    { value: "rust", label: "Rust" },
-                    { value: "java", label: "Java" },
-                    { value: "c", label: "C" },
-                    { value: "cpp", label: "C++" },
-                    { value: "solidity", label: "Solidity" },
-                  ].map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                  <ChevronDown className="h-4 w-4 text-brand-gold" />
-                </div>
-              </div>
+              <LanguageSelect value={pasteLanguage} onChange={setPasteLanguage} />
             </div>
             <textarea value={pastedCode} onChange={e => setPastedCode(e.target.value)} placeholder="Paste your code here..." className="mb-4 h-48 w-full resize-y rounded-[12px] border border-[rgba(255,255,255,0.08)] bg-white/[0.02] p-4 font-mono text-sm text-[#fafafa] outline-none transition-colors placeholder:text-[#a3a3a3]/50 focus:border-brand-gold/50" spellCheck={false} />
             <div className="flex items-center justify-between">
