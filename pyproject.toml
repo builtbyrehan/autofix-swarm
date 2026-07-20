@@ -19,6 +19,7 @@ dependencies = [
     "openai>=1.54.0",
     "langgraph>=0.2.45",
     "langchain-core>=0.3.15",
+    "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]
