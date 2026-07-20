@@ -617,6 +617,27 @@ class SandboxWorkspace:
                 dst_path.mkdir(exist_ok=True)
                 continue
             shutil.copyfile(src_path, dst_path)
+        self._make_writable_by_container(dest)
+
+    def _make_writable_by_container(self, root: Path) -> None:
+        """Grant read/write access to the container's fixed non-root user.
+
+        The workspace is copied by the host process, so every file and
+        directory is owned by whatever UID runs the host process. The
+        container always runs as ``config.container_user`` (a fixed numeric
+        UID, e.g. ``1000:1000``) regardless of the host UID. On Linux those
+        two UIDs commonly differ (CI runners in particular), so without this
+        the container gets ``PermissionError`` writing into a bind-mounted
+        ``/workspace`` it does not own. This directory is a disposable,
+        per-run temp copy removed on close(), so the broadened permissions
+        carry no meaningful risk.
+        """
+        os.chmod(root, 0o777)
+        for path in root.rglob("*"):
+            try:
+                os.chmod(path, 0o777 if path.is_dir() else 0o666)
+            except OSError:
+                continue
 
     # -- diff ---------------------------------------------------------------
 

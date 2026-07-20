@@ -80,6 +80,21 @@ class _TestFakeRunner:
         )
 
 
+def _simulate_parameterized_query_fix(content: str) -> str:
+    """Simulate Codex rewriting the vulnerable query to a parameterized one.
+
+    Replaces the known-vulnerable f-string query if present. The seeded
+    repo's file may already be in the fixed (parameterized) state from a
+    prior run, in which case the replace is a no-op — append a marker
+    instead so the sandbox always sees a non-empty diff for this file.
+    """
+    vulnerable = "f\"SELECT id, amount FROM payments WHERE customer_id = '{customer_id}'\""
+    fixed = '"SELECT id, amount FROM payments WHERE customer_id = ?"'
+    if vulnerable in content:
+        return content.replace(vulnerable, fixed)
+    return content + "\n# autofix: query already parameterized\n"
+
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -540,13 +555,10 @@ class TestCodexFixer:
                 # to the workspace.
                 target = Path(cwd) / "src/autofix_seed/payments.py"
                 if target.exists():
-                    content = target.read_text(encoding="utf-8")
-                    # Fix: replace the f-string query with parameterized query
-                    content = content.replace(
-                        "f\"SELECT id, amount FROM payments WHERE customer_id = '{customer_id}'\"",
-                        '"SELECT id, amount FROM payments WHERE customer_id = ?"'
+                    target.write_text(
+                        _simulate_parameterized_query_fix(target.read_text(encoding="utf-8")),
+                        encoding="utf-8",
                     )
-                    target.write_text(content, encoding="utf-8")
                 return CodexRunnerResult(
                     exit_code=0, stdout="fix applied", stderr="",
                     timed_out=False, blocked=False,
@@ -601,12 +613,10 @@ class TestCodexFixer:
                 target = Path(cwd) / "src/autofix_seed/payments.py"
                 if target.exists():
                     # Write to the flagged file
-                    content = target.read_text(encoding="utf-8")
-                    content = content.replace(
-                        "f\"SELECT id, amount FROM payments WHERE customer_id = '{customer_id}'\"",
-                        '"SELECT id, amount FROM payments WHERE customer_id = ?"'
+                    target.write_text(
+                        _simulate_parameterized_query_fix(target.read_text(encoding="utf-8")),
+                        encoding="utf-8",
                     )
-                    target.write_text(content, encoding="utf-8")
                 # Also write to a second file (should be rejected)
                 second = Path(cwd) / "src/autofix_seed/inventory.py"
                 if second.exists():
@@ -713,12 +723,10 @@ class TestCodexFixer:
                 self.last_cwd = cwd
                 target = Path(cwd) / "src/autofix_seed/payments.py"
                 if target.exists():
-                    content = target.read_text(encoding="utf-8")
-                    content = content.replace(
-                        "f\"SELECT id, amount FROM payments WHERE customer_id = '{customer_id}'\"",
-                        '"SELECT id, amount FROM payments WHERE customer_id = ?"'
+                    target.write_text(
+                        _simulate_parameterized_query_fix(target.read_text(encoding="utf-8")),
+                        encoding="utf-8",
                     )
-                    target.write_text(content, encoding="utf-8")
                 return CodexRunnerResult(
                     exit_code=0, stdout="", stderr="",
                     timed_out=False, blocked=False,
