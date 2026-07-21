@@ -6,20 +6,22 @@
 
 **An autonomous, explainable bug-detection and remediation pipeline — three specialized agents that scan a codebase, patch real issues with Codex, verify the fix against tests, and generate a plain-English explanation a human can trust and merge.**
 
+<img src="https://skillicons.dev/icons?i=py,fastapi,nextjs,react,ts,tailwind,docker,sqlite&theme=dark" alt="Python, FastAPI, Next.js, React, TypeScript, Tailwind CSS, Docker and SQLite" />
+
 <p>
   <a href="https://github.com/builtbyrehan/autofix-swarm">
-    <img src="https://img.shields.io/badge/SOURCE-GITHUB-111827?style=for-the-badge&logo=github&logoColor=white" alt="GitHub repository">
+    <img src="https://img.shields.io/badge/Source-GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub repository">
   </a>
   <a href="https://github.com/builtbyrehan/autofix-swarm/blob/main/README.md">
-    <img src="https://img.shields.io/badge/STATUS-PIPELINE_VERIFIED-10B981?style=for-the-badge" alt="Pipeline verified">
+    <img src="https://img.shields.io/badge/Status-Pipeline_Verified-00C853?style=for-the-badge&logoColor=white" alt="Pipeline verified">
   </a>
 </p>
 
 <p>
-  <img src="https://img.shields.io/github/stars/builtbyrehan/autofix-swarm?style=flat-square&logo=github" alt="GitHub stars">
-  <img src="https://img.shields.io/github/forks/builtbyrehan/autofix-swarm?style=flat-square&logo=github" alt="GitHub forks">
-  <img src="https://img.shields.io/badge/Track-Developer_Tools-F59E0B?style=flat-square" alt="Developer Tools track">
-  <img src="https://img.shields.io/badge/Detection_Rate-100%25-10B981?style=flat-square" alt="Detection rate">
+  <img src="https://img.shields.io/github/stars/builtbyrehan/autofix-swarm?style=flat-square&logo=github&color=FFD21E&logoColor=white&label=Stars" alt="GitHub stars">
+  <img src="https://img.shields.io/github/forks/builtbyrehan/autofix-swarm?style=flat-square&logo=github&color=58A6FF&logoColor=white&label=Forks" alt="GitHub forks">
+  <img src="https://img.shields.io/badge/Track-Developer_Tools-FF6B35?style=flat-square&logo=devpost&logoColor=white" alt="Developer Tools track">
+  <img src="https://img.shields.io/badge/Detection_Rate-100%25-00C853?style=flat-square&logoColor=white" alt="Detection rate">
   <img src="https://img.shields.io/badge/Sandboxed-Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker sandbox">
 </p>
 
@@ -31,15 +33,15 @@
 
 <div align="center">
   <a href="https://openai.com">
-    <img src="https://img.shields.io/badge/OpenAI-Build_Week-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI Build Week">
+    <img src="https://img.shields.io/badge/OpenAI-Build_Week-412991?style=for-the-badge&logo=openai&logoColor=74AA9C" alt="OpenAI Build Week">
   </a>
   &nbsp;
   <a href="https://openai.com">
-    <img src="https://img.shields.io/badge/Codex-Challenge-412991?style=for-the-badge&logo=openai&logoColor=white" alt="Codex Challenge">
+    <img src="https://img.shields.io/badge/Codex-Challenge-000000?style=for-the-badge&logo=openai&logoColor=00A67E" alt="Codex Challenge">
   </a>
   &nbsp;
   <a href="https://devpost.com">
-    <img src="https://img.shields.io/badge/Devpost-Developer_Tools-003E54?style=for-the-badge&logo=devpost&logoColor=white" alt="Devpost">
+    <img src="https://img.shields.io/badge/Devpost-Developer_Tools-003E54?style=for-the-badge&logo=devpost&logoColor=FF6B35" alt="Devpost">
   </a>
 </div>
 
@@ -211,9 +213,9 @@ flowchart LR
 <img src="https://skillicons.dev/icons?i=python,fastapi,nextjs,react,ts,tailwind,docker,sqlite" alt="Python, FastAPI, Next.js, React, TypeScript, Tailwind CSS, Docker and SQLite" />
 
 <p>
-  <img src="https://img.shields.io/badge/OpenAI_Codex-CLI-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI Codex CLI">
-  <img src="https://img.shields.io/badge/GPT--5.6-via_OpenRouter-6E56CF?style=for-the-badge" alt="GPT-5.6 via OpenRouter">
-  <img src="https://img.shields.io/badge/LangGraph-Orchestration-1C3C3C?style=for-the-badge" alt="LangGraph">
+  <img src="https://img.shields.io/badge/OpenAI_Codex-CLI-000000?style=for-the-badge&logo=openai&logoColor=74AA9C" alt="OpenAI Codex CLI">
+  <img src="https://img.shields.io/badge/GPT--5.6-via_OpenRouter-8B5CF6?style=for-the-badge&logoColor=white" alt="GPT-5.6 via OpenRouter">
+  <img src="https://img.shields.io/badge/LangGraph-Orchestration-1C9C8C?style=for-the-badge&logoColor=white" alt="LangGraph">
 </p>
 
 </div>
