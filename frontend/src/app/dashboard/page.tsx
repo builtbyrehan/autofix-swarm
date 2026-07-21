@@ -9,7 +9,7 @@ import {
 import Link from "next/link";
 
 interface Issue { id: string; file: string; line_range: { start: number; end: number }; description: string; severity: string; confidence: number; detectors: string[]; }
-interface Fix { fix_id: string; issue_id: string; status: string; codex_live: boolean; summary: string; changed_files: string[]; duration_seconds: number; }
+interface Fix { fix_id: string; issue_id: string; status: string; codex_live: boolean; summary: string; changed_files: string[]; duration_seconds: number; failure_reason?: string; }
 interface Verdict { verdict_id: string; issue_id: string; tests_passed: boolean; explanation: string; confidence: number; }
 interface PipelineRun { run_id: string; status: string; issues_found: number; fixes_attempted: number; fixes_succeeded: number; verifications_passed: number; total_duration_seconds: number; }
 
@@ -213,6 +213,53 @@ export default function Dashboard() {
     } finally { setIsRunning(false); }
   };
 
+  // Fetch issues/fixes/verdicts for a run and build a human-readable summary
+  // line (falls back to the issue count if no verdict explanation exists yet,
+  // e.g. no issue met the auto-fix confidence threshold).
+  const loadRunDetails = useCallback(async (data: {
+    run_id: string; status?: string; issues_found: number; fixes_attempted?: number;
+    fixes_succeeded?: number; verifications_passed?: number; total_duration_seconds?: number; duration_seconds?: number;
+  }): Promise<string> => {
+    const runId = data.run_id;
+    const [iRes, fRes, vRes] = await Promise.all([
+      fetch(`${apiUrl}/issues/${runId}`),
+      fetch(`${apiUrl}/fixes/${runId}`),
+      fetch(`${apiUrl}/verdicts/${runId}`),
+    ]);
+    const issuesData = iRes.ok ? (await iRes.json()).issues || [] : [];
+    const fixesData = fRes.ok ? (await fRes.json()).fixes || [] : [];
+    const verdictsData = vRes.ok ? (await vRes.json()).verdicts || [] : [];
+
+    setIssues(issuesData);
+    setFixes(fixesData);
+    setVerdicts(verdictsData);
+    setLatestRun({
+      run_id: runId,
+      status: data.status || "completed",
+      issues_found: data.issues_found || 0,
+      fixes_attempted: data.fixes_attempted || 0,
+      fixes_succeeded: data.fixes_succeeded || 0,
+      verifications_passed: data.verifications_passed || 0,
+      total_duration_seconds: data.total_duration_seconds ?? data.duration_seconds ?? 0,
+    });
+
+    if (verdictsData.length > 0) {
+      return verdictsData.map((v: Verdict) => v.explanation).join(" ");
+    }
+    const fixesAttempted = data.fixes_attempted || 0;
+    if (fixesAttempted > 0) {
+      const blocked: Fix | undefined = fixesData.find(
+        (f: Fix) => f.status === "blocked" || f.status === "failed"
+      );
+      const reason = blocked?.failure_reason || blocked?.summary;
+      return `${fixesAttempted} fix attempt${fixesAttempted !== 1 ? "s" : ""} could not complete${reason ? `: ${reason}` : "."}`;
+    }
+    if (data.issues_found > 0) {
+      return `${data.issues_found} issue${data.issues_found !== 1 ? "s" : ""} found, but none met the confidence threshold to auto-fix.`;
+    }
+    return "No issues found.";
+  }, [apiUrl]);
+
   const handlePasteSubmit = async () => {
     if (!pastedCode.trim()) return;
     setPasteLoading(true); setPasteResult(null);
@@ -223,12 +270,12 @@ export default function Dashboard() {
       });
       if (res.ok) {
         const data = await res.json();
-        setPasteResult(`Scan complete. ${data.issues_found || 0} issues found.`);
-        if (data.run_id) {
-          const iRes = await fetch(`${apiUrl}/issues/${data.run_id}`);
-          if (iRes.ok) { const iData = await iRes.json(); setIssues(iData.issues || []); }
-        }
-      } else setPasteResult("Error: Could not scan code.");
+        const summary = data.run_id ? await loadRunDetails(data) : "";
+        setPasteResult(`${data.issues_found || 0} issues found, ${data.fixes_succeeded || 0} fixed, ${data.verifications_passed || 0} verified. ${summary}`.trim());
+      } else {
+        const body = await res.json().catch(() => ({ detail: res.statusText }));
+        setPasteResult(`Error: ${body.detail || "Could not scan code."}`);
+      }
     } catch { setPasteResult("Network error. Is the backend running?"); } finally { setPasteLoading(false); }
   };
 
@@ -241,12 +288,12 @@ export default function Dashboard() {
       const res = await fetch(`${apiUrl}/upload`, { method: "POST", body: formData });
       if (res.ok) {
         const data = await res.json();
-        setUploadResult(`File "${uploadedFile.name}" uploaded. ${data.issues_found || 0} issues found.`);
-        if (data.run_id) {
-          const iRes = await fetch(`${apiUrl}/issues/${data.run_id}`);
-          if (iRes.ok) { const iData = await iRes.json(); setIssues(iData.issues || []); }
-        }
-      } else setUploadResult("Error: Could not upload file.");
+        const summary = data.run_id ? await loadRunDetails(data) : "";
+        setUploadResult(`File "${uploadedFile.name}": ${data.issues_found || 0} issues found, ${data.fixes_succeeded || 0} fixed, ${data.verifications_passed || 0} verified. ${summary}`.trim());
+      } else {
+        const body = await res.json().catch(() => ({ detail: res.statusText }));
+        setUploadResult(`Error: ${body.detail || "Could not upload file."}`);
+      }
     } catch { setUploadResult("Network error."); } finally { setUploadLoading(false); }
   };
 

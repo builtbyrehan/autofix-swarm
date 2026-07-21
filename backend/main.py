@@ -99,6 +99,102 @@ def _get_repo_path(override: Optional[str] = None) -> Path:
     return settings.target_repo_path_resolved
 
 
+def _run_full_pipeline(
+    *,
+    repo_path: Path,
+    run_id: str,
+    use_semgrep: bool,
+    use_gpt: bool,
+    max_issues: Optional[int] = None,
+    auto_fix_threshold: float = 0.7,
+):
+    """Run Watcher -> Codex Fixer -> Reviewer and persist all results.
+
+    Shared by /run, /run/custom, /run/custom/upload, and /upload so every
+    entry point produces fixes and a plain-English verdict explanation,
+    not just a list of detected issues.
+
+    Returns:
+        The completed PipelineState (issues/fixes/verdicts already saved to db).
+    """
+    from orchestrator.graph import Pipeline, PipelineConfig
+
+    pipeline_config = PipelineConfig(
+        repo_path=repo_path,
+        use_semgrep=use_semgrep,
+        use_gpt=use_gpt,
+        max_issues=max_issues,
+        auto_fix_threshold=auto_fix_threshold,
+        artifacts_dir=settings.artifacts_dir,
+        openai_api_key=settings.openai_api_key,
+        openai_base_url=settings.openai_base_url,
+        openai_model=settings.openai_model,
+    )
+
+    pipeline = Pipeline()
+    state = pipeline.run(pipeline_config, run_id=run_id)
+
+    if state.watcher_result:
+        for issue in state.watcher_result.issues:
+            db.save_issue(
+                issue_id=issue.id,
+                run_id=run_id,
+                file=issue.file,
+                line_start=issue.line_range["start"],
+                line_end=issue.line_range["end"],
+                description=issue.description,
+                severity=issue.severity,
+                confidence=issue.confidence,
+                detectors=issue.detectors,
+            )
+
+    issue_to_fix_id: dict[str, str] = {}
+    for fix_result in state.fix_results:
+        fix_id = str(uuid.uuid4())
+        issue_to_fix_id[fix_result.issue_id] = fix_id
+        db.save_fix(
+            fix_id=fix_id,
+            issue_id=fix_result.issue_id,
+            run_id=run_id,
+            status=fix_result.status,
+            codex_live=fix_result.codex_live,
+            summary=fix_result.summary,
+            changed_files=fix_result.changed_files,
+            diff_text=fix_result.diff,
+            artifact_path=(
+                str(fix_result.artifact_path) if fix_result.artifact_path else None
+            ),
+            duration_seconds=fix_result.duration_seconds,
+            failure_reason=fix_result.failure_reason,
+        )
+
+    for review_result in state.review_results:
+        fix_id = issue_to_fix_id.get(review_result.verdict.issue_id, "")
+        db.save_verdict(
+            verdict_id=str(uuid.uuid4()),
+            fix_id=fix_id,
+            issue_id=review_result.verdict.issue_id,
+            run_id=run_id,
+            status="succeeded",
+            tests_passed=review_result.verdict.tests_passed,
+            explanation=review_result.verdict.explanation,
+            confidence=review_result.verdict.confidence,
+            duration_seconds=review_result.duration_seconds,
+        )
+
+    db.update_pipeline_run(
+        run_id=run_id,
+        status=state.status,
+        issues_found=state.issues_found,
+        fixes_attempted=state.fixes_attempted,
+        fixes_succeeded=state.fixes_succeeded,
+        verifications_passed=state.verifications_passed,
+        total_duration_seconds=state.duration_seconds,
+    )
+
+    return state
+
+
 # ---------------------------------------------------------------------------
 # API Endpoints
 # ---------------------------------------------------------------------------
@@ -418,85 +514,13 @@ async def run_pipeline(request: PipelineRunRequest):
     db.create_pipeline_run(str(repo_path), config, run_id=run_id)
 
     try:
-        # Run full pipeline using orchestrator
-        from orchestrator.graph import Pipeline, PipelineConfig
-
-        pipeline_config = PipelineConfig(
+        state = _run_full_pipeline(
             repo_path=repo_path,
+            run_id=run_id,
             use_semgrep=request.use_semgrep,
             use_gpt=request.use_gpt,
             max_issues=request.max_issues,
             auto_fix_threshold=request.auto_fix_threshold,
-            artifacts_dir=settings.artifacts_dir,
-            openai_api_key=settings.openai_api_key,
-            openai_base_url=settings.openai_base_url,
-            openai_model=settings.openai_model,
-        )
-
-        pipeline = Pipeline()
-        state = pipeline.run(pipeline_config, run_id=run_id)
-
-        # Save all results to database
-        # Save issues
-        if state.watcher_result:
-            for issue in state.watcher_result.issues:
-                db.save_issue(
-                    issue_id=issue.id,
-                    run_id=run_id,
-                    file=issue.file,
-                    line_start=issue.line_range["start"],
-                    line_end=issue.line_range["end"],
-                    description=issue.description,
-                    severity=issue.severity,
-                    confidence=issue.confidence,
-                    detectors=issue.detectors,
-                )
-
-        # Save fixes — track fix_id per issue for verdict linking
-        issue_to_fix_id: dict[str, str] = {}
-        for fix_result in state.fix_results:
-            fix_id = str(uuid.uuid4())
-            issue_to_fix_id[fix_result.issue_id] = fix_id
-            db.save_fix(
-                fix_id=fix_id,
-                issue_id=fix_result.issue_id,
-                run_id=run_id,
-                status=fix_result.status,
-                codex_live=fix_result.codex_live,
-                summary=fix_result.summary,
-                changed_files=fix_result.changed_files,
-                diff_text=fix_result.diff,
-                artifact_path=(
-                    str(fix_result.artifact_path) if fix_result.artifact_path else None
-                ),
-                duration_seconds=fix_result.duration_seconds,
-                failure_reason=fix_result.failure_reason,
-            )
-
-        # Save verdicts — link to fix_id via issue_id
-        for review_result in state.review_results:
-            fix_id = issue_to_fix_id.get(review_result.verdict.issue_id, "")
-            db.save_verdict(
-                verdict_id=str(uuid.uuid4()),
-                fix_id=fix_id,
-                issue_id=review_result.verdict.issue_id,
-                run_id=run_id,
-                status="succeeded",
-                tests_passed=review_result.verdict.tests_passed,
-                explanation=review_result.verdict.explanation,
-                confidence=review_result.verdict.confidence,
-                duration_seconds=review_result.duration_seconds,
-            )
-
-        # Update pipeline run with final metrics
-        db.update_pipeline_run(
-            run_id=run_id,
-            status=state.status,
-            issues_found=state.issues_found,
-            fixes_attempted=state.fixes_attempted,
-            fixes_succeeded=state.fixes_succeeded,
-            verifications_passed=state.verifications_passed,
-            total_duration_seconds=state.duration_seconds,
         )
 
         duration = time.monotonic() - start_time
@@ -592,6 +616,7 @@ async def run_custom_pipeline(request_body: Optional[dict[str, Any]] = Body(defa
     language = request_body.get("language", "python")
     use_semgrep = request_body.get("use_semgrep", True)
     use_gpt = request_body.get("use_gpt", True)
+    auto_fix_threshold = float(request_body.get("auto_fix_threshold", 0.7))
 
     if not code or not code.strip():
         raise HTTPException(
@@ -638,57 +663,32 @@ async def run_custom_pipeline(request_body: Optional[dict[str, Any]] = Body(defa
         }
         db.create_pipeline_run(str(repo_path), config, run_id=run_id)
 
-        # Run watcher scan (only Semgrep for Python, GPT for all)
-        from agents.watcher import Watcher, WatcherConfig
-
         raw_max = request_body.get("max_issues")
         max_issues = int(raw_max) if raw_max is not None else None
 
-        watcher_config = WatcherConfig(
+        state = _run_full_pipeline(
+            repo_path=repo_path,
+            run_id=run_id,
             use_semgrep=use_semgrep and language == "python",
             use_gpt=use_gpt,
             max_issues=max_issues,
-            openai_api_key=settings.openai_api_key,
-            openai_base_url=settings.openai_base_url,
-            openai_model=settings.openai_model,
+            auto_fix_threshold=auto_fix_threshold,
         )
-
-        watcher = Watcher(config=watcher_config)
-        result = watcher.scan(repo_path)
-
-        # Save issues
-        for issue in result.issues:
-            db.save_issue(
-                issue_id=issue.id,
-                run_id=run_id,
-                file=issue.file,
-                line_start=issue.line_range["start"],
-                line_end=issue.line_range["end"],
-                description=issue.description,
-                severity=issue.severity,
-                confidence=issue.confidence,
-                detectors=issue.detectors,
-            )
 
         duration = time.monotonic() - start_time
 
-        # Update pipeline run
-        db.update_pipeline_run(
-            run_id=run_id,
-            status="completed",
-            issues_found=result.total_count,
-            total_duration_seconds=duration,
-        )
-
         return PipelineRunResponse(
             run_id=run_id,
-            status=PipelineStatus.COMPLETED,
-            issues_found=result.total_count,
-            fixes_attempted=0,
-            fixes_succeeded=0,
-            verifications_passed=0,
+            status=PipelineStatus(state.status),
+            issues_found=state.issues_found,
+            fixes_attempted=state.fixes_attempted,
+            fixes_succeeded=state.fixes_succeeded,
+            verifications_passed=state.verifications_passed,
             total_duration_seconds=duration,
-            message=f"Custom code scan complete: {result.total_count} issues found",
+            message=(
+                f"Custom code scan complete: {state.issues_found} issues found, "
+                f"{state.fixes_succeeded} fixed, {state.verifications_passed} verified"
+            ),
         )
 
     except Exception as e:
@@ -763,53 +763,27 @@ async def run_custom_pipeline_upload(file: UploadFile = File(...)):
         }
         db.create_pipeline_run(str(repo_path), config, run_id=run_id)
 
-        # Run watcher scan
-        from agents.watcher import Watcher, WatcherConfig
-
-        watcher_config = WatcherConfig(
+        state = _run_full_pipeline(
+            repo_path=repo_path,
+            run_id=run_id,
             use_semgrep=language == "python",
             use_gpt=True,
-            openai_api_key=settings.openai_api_key,
-            openai_base_url=settings.openai_base_url,
-            openai_model=settings.openai_model,
         )
-
-        watcher = Watcher(config=watcher_config)
-        result = watcher.scan(repo_path)
-
-        # Save issues
-        for issue in result.issues:
-            db.save_issue(
-                issue_id=issue.id,
-                run_id=run_id,
-                file=issue.file,
-                line_start=issue.line_range["start"],
-                line_end=issue.line_range["end"],
-                description=issue.description,
-                severity=issue.severity,
-                confidence=issue.confidence,
-                detectors=issue.detectors,
-            )
 
         duration = time.monotonic() - start_time
 
-        # Update pipeline run
-        db.update_pipeline_run(
-            run_id=run_id,
-            status="completed",
-            issues_found=result.total_count,
-            total_duration_seconds=duration,
-        )
-
         return PipelineRunResponse(
             run_id=run_id,
-            status=PipelineStatus.COMPLETED,
-            issues_found=result.total_count,
-            fixes_attempted=0,
-            fixes_succeeded=0,
-            verifications_passed=0,
+            status=PipelineStatus(state.status),
+            issues_found=state.issues_found,
+            fixes_attempted=state.fixes_attempted,
+            fixes_succeeded=state.fixes_succeeded,
+            verifications_passed=state.verifications_passed,
             total_duration_seconds=duration,
-            message=f"Upload scan complete: {result.total_count} issues found in {file.filename}",
+            message=(
+                f"Upload scan complete: {state.issues_found} issues found in {file.filename}, "
+                f"{state.fixes_succeeded} fixed, {state.verifications_passed} verified"
+            ),
         )
 
     except HTTPException:
@@ -886,47 +860,21 @@ async def upload_and_scan(file: UploadFile = File(...)):
         }
         db.create_pipeline_run(str(repo_path), config, run_id=run_id)
 
-        # Run watcher scan
-        from agents.watcher import Watcher, WatcherConfig
-
-        watcher_config = WatcherConfig(
+        state = _run_full_pipeline(
+            repo_path=repo_path,
+            run_id=run_id,
             use_semgrep=language == "python",
             use_gpt=True,
-            openai_api_key=settings.openai_api_key,
-            openai_base_url=settings.openai_base_url,
-            openai_model=settings.openai_model,
         )
-
-        watcher = Watcher(config=watcher_config)
-        result = watcher.scan(repo_path)
-
-        # Save issues
-        for issue in result.issues:
-            db.save_issue(
-                issue_id=issue.id,
-                run_id=run_id,
-                file=issue.file,
-                line_start=issue.line_range["start"],
-                line_end=issue.line_range["end"],
-                description=issue.description,
-                severity=issue.severity,
-                confidence=issue.confidence,
-                detectors=issue.detectors,
-            )
 
         duration = time.monotonic() - start_time
 
-        # Update pipeline run
-        db.update_pipeline_run(
-            run_id=run_id,
-            status="completed",
-            issues_found=result.total_count,
-            total_duration_seconds=duration,
-        )
-
         return {
             "run_id": run_id,
-            "issues_found": result.total_count,
+            "issues_found": state.issues_found,
+            "fixes_attempted": state.fixes_attempted,
+            "fixes_succeeded": state.fixes_succeeded,
+            "verifications_passed": state.verifications_passed,
             "filename": file.filename,
             "language": language,
             "duration_seconds": duration,
