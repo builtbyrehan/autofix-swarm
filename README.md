@@ -160,6 +160,12 @@ The Next.js dashboard shows live and cached pipeline runs, per-agent status, and
 
 Three agents, each with one clear job. No agent does another agent's job. State passes explicitly between them through the LangGraph orchestrator.
 
+<div align="center">
+  <img src="docs/assets/pipeline-animated.svg" alt="Animated AutoFix Swarm pipeline diagram" width="100%" />
+</div>
+
+<sub>Static fallback (Mermaid, renders the same flow without animation):</sub>
+
 ```mermaid
 flowchart LR
     R[Seeded Repo] --> W["Watcher<br/>GPT-5.6 semantic scan"]
@@ -307,6 +313,10 @@ The demo repo (`seeded_repo/`) contains **7 intentionally planted bugs** of know
 ---
 
 ## Pipeline Test Results (July 19, 2026)
+
+<div align="center">
+  <img src="docs/assets/eval-stats-animated.svg" alt="Animated eval results bar chart" width="100%" />
+</div>
 
 ### 🔍 Detection (Watcher Agent)
 - **7/7 bugs detected** by GPT-5.6 via OpenRouter API
