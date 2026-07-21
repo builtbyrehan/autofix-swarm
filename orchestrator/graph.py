@@ -163,6 +163,11 @@ class Pipeline:
             state.completed_at = time.monotonic()
 
         except Exception as e:
+            import traceback
+            try:
+                traceback.print_exc()
+            except Exception:
+                pass
             state.status = "failed"
             state.errors.append(str(e))
             state.completed_at = time.monotonic()

@@ -147,7 +147,10 @@ class Watcher:
                 semgrep_count = len(semgrep_issues)
             except SemgrepUnavailableError as e:
                 import sys
-                print(f"[WATCHER] Semgrep unavailable, skipping: {e}", file=sys.stderr)
+                try:
+                    print(f"[WATCHER] Semgrep unavailable, skipping: {e}", file=sys.stderr)
+                except OSError:
+                    pass
 
         # Run GPT-5.6 gap analysis if enabled
         if self.config.use_gpt:
@@ -157,7 +160,10 @@ class Watcher:
                 gpt_count = len(gpt_issues)
             except GPTUnavailableError as e:
                 import sys
-                print(f"[WATCHER] GPT analysis unavailable, skipping: {e}", file=sys.stderr)
+                try:
+                    print(f"[WATCHER] GPT analysis unavailable, skipping: {e}", file=sys.stderr)
+                except OSError:
+                    pass
 
         # Sort by severity and confidence
         all_issues = self._rank_issues(all_issues)
@@ -408,7 +414,10 @@ class Watcher:
         except Exception as e:
             # Log but don't fail — GPT analysis is additive for other errors
             import sys
-            print(f"[WATCHER] GPT analysis error (non-fatal): {e}", file=sys.stderr)
+            try:
+                print(f"[WATCHER] GPT analysis error (non-fatal): {e}", file=sys.stderr)
+            except OSError:
+                pass
 
         return issues
 
