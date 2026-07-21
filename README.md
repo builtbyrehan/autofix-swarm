@@ -1,8 +1,8 @@
 <div align="center">
 
-# AutoFix Swarm
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:1E1B4B,50:412991,100:00A67E&height=220&section=header&text=AutoFix%20Swarm&fontSize=64&fontColor=FFFFFF&fontAlignY=38&animation=fadeIn&desc=Find%20the%20bug.%20Fix%20the%20bug.%20Explain%20the%20fix.&descAlignY=58&descSize=20&descAlign=50" alt="AutoFix Swarm banner" width="100%" />
 
-### Find the bug. Fix the bug. Explain the fix.
+<img src="https://readme-typing-svg.demolab.com/?font=Fira+Code&size=18&pause=1200&color=8B5CF6&center=true&vCenter=true&width=780&lines=Three+agents.+One+bug+lifecycle.+Zero+manual+patching.;GPT-5.6+detects+%E2%86%92+Codex+fixes+%E2%86%92+GPT-5.6+explains.;100%25+detection+rate+on+7+seeded+bugs.;Sandboxed+in+Docker.+Verified+by+pytest." alt="Typing animation" />
 
 **An autonomous, explainable bug-detection and remediation pipeline — three specialized agents that scan a codebase, patch real issues with Codex, verify the fix against tests, and generate a plain-English explanation a human can trust and merge.**
 
@@ -575,5 +575,7 @@ Until a `LICENSE` file is added, the repository remains under the copyright righ
 **AutoFix Swarm — Find the bug. Fix the bug. Explain the fix.**
 
 Built for **OpenAI Build Week** — Codex Challenge · Developer Tools track
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:00A67E,50:412991,100:1E1B4B&height=120&section=footer" alt="footer wave" width="100%" />
 
 </div>
