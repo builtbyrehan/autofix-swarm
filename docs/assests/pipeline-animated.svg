@@ -1,0 +1,104 @@
+<svg viewBox="0 0 1000 280" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0D1117"/>
+      <stop offset="100%" stop-color="#161B22"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#30363D"/>
+    </marker>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <style>
+      .node-glow { animation: pulse 2.4s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+      .n1 { animation-delay: 0s; }
+      .n2 { animation-delay: .4s; }
+      .n3 { animation-delay: .8s; }
+      .n4 { animation-delay: 1.2s; }
+      .n5 { animation-delay: 1.6s; }
+      @keyframes pulse {
+        0%, 100% { opacity: .55; r: 34; }
+        50% { opacity: 1; r: 38; }
+      }
+      .label { fill: #C9D1D9; font-size: 15px; font-weight: 600; }
+      .sub { fill: #8B949E; font-size: 11px; }
+      .caption { fill: #E6EDF3; font-size: 13px; font-weight: 700; letter-spacing: .3px; }
+      .dot { filter: drop-shadow(0 0 4px currentColor); }
+      .flow { offset-rotate: 0deg; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1000" height="280" rx="16" fill="url(#bg)"/>
+
+  <!-- connector paths -->
+  <path id="p1" d="M 118 150 L 262 150" stroke="#30363D" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path id="p2" d="M 338 150 L 482 150" stroke="#30363D" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path id="p3" d="M 558 150 L 702 150" stroke="#30363D" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path id="p4" d="M 778 150 L 902 150" stroke="#30363D" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- traveling data pulses -->
+  <circle r="4" fill="#8B5CF6" class="dot">
+    <animateMotion dur="1.8s" repeatCount="indefinite" begin="0s"><mpath href="#p1"/></animateMotion>
+  </circle>
+  <circle r="4" fill="#00A67E" class="dot">
+    <animateMotion dur="1.8s" repeatCount="indefinite" begin="0.5s"><mpath href="#p2"/></animateMotion>
+  </circle>
+  <circle r="4" fill="#58A6FF" class="dot">
+    <animateMotion dur="1.8s" repeatCount="indefinite" begin="1.0s"><mpath href="#p3"/></animateMotion>
+  </circle>
+  <circle r="4" fill="#FFD21E" class="dot">
+    <animateMotion dur="1.8s" repeatCount="indefinite" begin="1.5s"><mpath href="#p4"/></animateMotion>
+  </circle>
+
+  <!-- Seeded Repo -->
+  <g transform="translate(80,150)">
+    <circle class="node-glow n1" r="34" fill="#6B7280" filter="url(#glow)"/>
+    <circle r="26" fill="#161B22" stroke="#6B7280" stroke-width="2"/>
+    <text x="0" y="6" text-anchor="middle" font-size="20">📁</text>
+  </g>
+  <text x="80" y="212" text-anchor="middle" class="label">Seeded Repo</text>
+  <text x="80" y="230" text-anchor="middle" class="sub">7 planted bugs</text>
+
+  <!-- Watcher -->
+  <g transform="translate(300,150)">
+    <circle class="node-glow n2" r="34" fill="#8B5CF6" filter="url(#glow)"/>
+    <circle r="26" fill="#161B22" stroke="#8B5CF6" stroke-width="2"/>
+    <text x="0" y="6" text-anchor="middle" font-size="20">🔍</text>
+  </g>
+  <text x="300" y="212" text-anchor="middle" class="label">Watcher</text>
+  <text x="300" y="230" text-anchor="middle" class="sub">GPT-5.6 detection</text>
+
+  <!-- Codex -->
+  <g transform="translate(520,150)">
+    <circle class="node-glow n3" r="34" fill="#00A67E" filter="url(#glow)"/>
+    <circle r="26" fill="#161B22" stroke="#00A67E" stroke-width="2"/>
+    <text x="0" y="6" text-anchor="middle" font-size="20">🛠️</text>
+  </g>
+  <text x="520" y="212" text-anchor="middle" class="label">Codex</text>
+  <text x="520" y="230" text-anchor="middle" class="sub">writes the fix</text>
+
+  <!-- Reviewer -->
+  <g transform="translate(740,150)">
+    <circle class="node-glow n4" r="34" fill="#58A6FF" filter="url(#glow)"/>
+    <circle r="26" fill="#161B22" stroke="#58A6FF" stroke-width="2"/>
+    <text x="0" y="6" text-anchor="middle" font-size="20">✅</text>
+  </g>
+  <text x="740" y="212" text-anchor="middle" class="label">Reviewer</text>
+  <text x="740" y="230" text-anchor="middle" class="sub">pytest + explain</text>
+
+  <!-- Dashboard -->
+  <g transform="translate(940,150)">
+    <circle class="node-glow n5" r="34" fill="#FFD21E" filter="url(#glow)"/>
+    <circle r="26" fill="#161B22" stroke="#FFD21E" stroke-width="2"/>
+    <text x="0" y="6" text-anchor="middle" font-size="20">📊</text>
+  </g>
+  <text x="940" y="212" text-anchor="middle" class="label">Dashboard</text>
+  <text x="940" y="230" text-anchor="middle" class="sub">live trace</text>
+
+  <text x="500" y="35" text-anchor="middle" class="caption">One bug, five stages, zero manual patching</text>
+</svg>
