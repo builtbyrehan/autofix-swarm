@@ -392,8 +392,20 @@ class Watcher:
                     response_format={"type": "json_object"},
                 )
 
-                content = response.choices[0].message.content
-                if not content:
+                choices = getattr(response, "choices", None) or []
+                if not choices:
+                    print(
+                        f"[WATCHER] GPT returned no choices for {rel_path}; skipping."
+                    )
+                    continue
+
+                message = getattr(choices[0], "message", None)
+                content = getattr(message, "content", None) if message else None
+
+                if not isinstance(content, str) or not content.strip():
+                    print(
+                        f"[WATCHER] GPT returned no usable content for {rel_path}; skipping."
+                    )
                     continue
 
                 # Parse GPT response
