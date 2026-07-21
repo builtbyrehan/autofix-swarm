@@ -1,49 +1,118 @@
 <div align="center">
 
-# 🤖 AutoFix Swarm
-### Autonomous Bug Detection & Remediation Agents
+# AutoFix Swarm
 
-**A system that finds its own bugs, fixes them with Codex, and explains why — so developers don't have to.**
+### Find the bug. Fix the bug. Explain the fix.
 
-[![OpenAI Build Week](https://img.shields.io/badge/OpenAI-Build%20Week-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com)
-[![Codex](https://img.shields.io/badge/Codex-Challenge-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com)
-[![Devpost](https://img.shields.io/badge/Track-Developer%20Tools-003E54?style=for-the-badge&logo=devpost&logoColor=white)](https://devpost.com)
+**An autonomous, explainable bug-detection and remediation pipeline — three specialized agents that scan a codebase, patch real issues with Codex, verify the fix against tests, and generate a plain-English explanation a human can trust and merge.**
 
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-14-000000?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-Frontend-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tailwind](https://img.shields.io/badge/Tailwind-CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Docker](https://img.shields.io/badge/Docker-Sandbox-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
-[![SQLite](https://img.shields.io/badge/SQLite-Logging-003B57?style=flat-square&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
-[![Pytest](https://img.shields.io/badge/Pytest-Eval-0A9EDC?style=flat-square&logo=pytest&logoColor=white)](https://pytest.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](#)
+<p>
+  <a href="https://github.com/builtbyrehan/autofix-swarm">
+    <img src="https://img.shields.io/badge/SOURCE-GITHUB-111827?style=for-the-badge&logo=github&logoColor=white" alt="GitHub repository">
+  </a>
+  <a href="https://github.com/builtbyrehan/autofix-swarm/blob/main/README.md">
+    <img src="https://img.shields.io/badge/STATUS-PIPELINE_VERIFIED-10B981?style=for-the-badge" alt="Pipeline verified">
+  </a>
+</p>
+
+<p>
+  <img src="https://img.shields.io/github/stars/builtbyrehan/autofix-swarm?style=flat-square&logo=github" alt="GitHub stars">
+  <img src="https://img.shields.io/github/forks/builtbyrehan/autofix-swarm?style=flat-square&logo=github" alt="GitHub forks">
+  <img src="https://img.shields.io/badge/Track-Developer_Tools-F59E0B?style=flat-square" alt="Developer Tools track">
+  <img src="https://img.shields.io/badge/Detection_Rate-100%25-10B981?style=flat-square" alt="Detection rate">
+  <img src="https://img.shields.io/badge/Sandboxed-Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker sandbox">
+</p>
 
 </div>
 
 ---
 
-## 📋 Table of Contents
+## Built for OpenAI Build Week — Codex Challenge
 
-- [Build Week Requirements](#-build-week-delivery-requirements-verified)
-- [Problem Statement](#1-problem-statement)
-- [Architecture Overview](#2-architecture-overview)
-- [Tech Stack](#3-tech-stack)
-- [Repository Structure](#4-repository-structure)
-- [Seeded Bug Repo & Eval Harness](#5-seeded-bug-repo--eval-harness)
-- [Pipeline Test Results](#6-pipeline-test-results-july-19-2026)
-- [Success Criteria](#7-success-criteria-what-done-means-for-this-project)
-- [Demo Script](#8-demo-script-for-the-submission-video--live-demo)
-- [Submission Checklist](#9-submission-checklist-openai-build-week-requirements)
-- [Setup & Run Instructions](#10-setup--run-instructions)
-- [API Endpoints](#api-endpoints)
-- [Explicit Non-Goals](#11-explicit-non-goals-to-prevent-scope-creep)
-- [Key Technical Decisions](#12-key-technical-decisions)
+<div align="center">
+  <a href="https://openai.com">
+    <img src="https://img.shields.io/badge/OpenAI-Build_Week-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI Build Week">
+  </a>
+  &nbsp;
+  <a href="https://openai.com">
+    <img src="https://img.shields.io/badge/Codex-Challenge-412991?style=for-the-badge&logo=openai&logoColor=white" alt="Codex Challenge">
+  </a>
+  &nbsp;
+  <a href="https://devpost.com">
+    <img src="https://img.shields.io/badge/Devpost-Developer_Tools-003E54?style=for-the-badge&logo=devpost&logoColor=white" alt="Devpost">
+  </a>
+</div>
+
+<p align="center">
+Built for the <strong>OpenAI Build Week (Codex Challenge)</strong>, Devpost <strong>Developer Tools</strong> track. Required technologies: <strong>Codex</strong> + <strong>GPT-5.6</strong>.
+</p>
+
+> [!IMPORTANT]
+> **Runtime roles are documented transparently.** GPT-5.6 performs semantic bug detection and produces the final review explanation. Codex (with an OpenRouter fallback when the Codex CLI is unavailable) writes and applies every code fix. The fallback is disclosed in the tech stack and is never presented as a live Codex or GPT-5.6 call when it is replaying cached results.
 
 ---
 
-## ✅ Build Week Delivery Requirements (Verified)
+## Quick Links
+
+| Resource | URL |
+|---|---|
+| 💻 Source code | [github.com/builtbyrehan/autofix-swarm](https://github.com/builtbyrehan/autofix-swarm) |
+| ⚙️ Backend API docs (local) | `http://localhost:8000/docs` |
+| 🖥️ Dashboard (local) | `http://localhost:3000` |
+| 🏆 Hackathon | [OpenAI Build Week — Codex Challenge](https://openai.com) |
+| 📅 Deadline | July 21, 2026, 5:00 PM PT / July 22, 2026, 5:00 AM PKT |
+
+---
+
+## Table of Contents
+
+- [Why AutoFix Swarm](#why-autofix-swarm)
+- [Build Week Delivery Requirements](#build-week-delivery-requirements-verified)
+- [Core Capabilities](#core-capabilities)
+- [Architecture Overview](#architecture-overview)
+- [How the Pipeline Works](#how-the-pipeline-works)
+- [Technology Stack](#technology-stack)
+- [Repository Structure](#repository-structure)
+- [Seeded Bug Repo & Eval Harness](#seeded-bug-repo--eval-harness)
+- [Pipeline Test Results](#pipeline-test-results-july-19-2026)
+- [Setup & Run Instructions](#setup--run-instructions)
+- [Environment Variables](#environment-variables)
+- [API Reference](#api-reference)
+- [Success Criteria](#success-criteria)
+- [Reliability & Safety Design](#reliability--safety-design)
+- [Demo Script](#demo-script-for-the-submission-video--live-demo)
+- [Submission Checklist](#submission-checklist-openai-build-week-requirements)
+- [Explicit Non-Goals](#explicit-non-goals-to-prevent-scope-creep)
+- [Key Technical Decisions](#key-technical-decisions)
+- [Known Limitations](#known-limitations)
+- [Roadmap](#roadmap)
+- [Acknowledgements](#acknowledgements)
+- [License](#license)
+
+---
+
+## Why AutoFix Swarm?
+
+Software teams generate bugs and security issues faster than humans can review and fix them. Today the loop is: a human notices an issue → a human decides how to fix it → a human writes the fix → another human reviews it. This is slow and doesn't scale.
+
+**AutoFix Swarm** automates that loop with a small team of specialized agents. It finds real issues in a codebase, uses Codex to write the actual fix, verifies the fix against tests, and produces a plain-English explanation of why the fix was made — so a human can trust and merge it quickly instead of redoing the work.
+
+> **One-line pitch:** *A system that finds its own bugs, fixes them with Codex, and explains why — so developers don't have to.*
+
+### Value in 30 Seconds
+
+| Challenge | AutoFix Swarm response |
+|---|---|
+| Bug review is a human bottleneck | Three agents run detection, fixing, and verification end to end |
+| Static analysis misses semantic bugs | GPT-5.6 catches SQL injection, auth flaws, and logic errors static tools miss |
+| AI-written fixes are hard to trust | Every fix runs against real tests before it's called done |
+| Black-box AI patches | Reviewer generates a plain-English explanation grounded in the diff and test result |
+| Unsafe code execution | Fix generation and testing run inside a network-disabled Docker sandbox |
+| Live API failure during a demo | A cached successful run replays as an explicit fallback, never disguised as live |
+
+---
+
+## Build Week Delivery Requirements (Verified)
 
 | Requirement | Status |
 |---|---|
@@ -54,66 +123,102 @@
 | `/feedback` Codex Session ID from the core-build thread | ⬜ Pending |
 | Installation instructions, supported platforms, judge testing path | ✅ Done |
 
-> **Deadline:** July 21, 2026, 5:00 PM PT (July 22, 2026, 5:00 AM PKT)
+---
+
+## Core Capabilities
+
+### Explainable Bug Findings
+
+Every detected issue includes:
+
+- file and line range;
+- severity and confidence score;
+- plain description of the issue;
+- category (security, logic, code quality).
+
+### Grounded Fix Explanations
+
+GPT-5.6 receives the **diff and the deterministic pytest result**, not free rein to narrate the fix however it likes. The Reviewer explanation is generated from that evidence and never rewrites or second-guesses the patch itself.
+
+### Sandboxed Fix Execution
+
+All fix generation and test execution happens inside a **Docker sandbox**: no network access, writes confined to a scratch copy of the repository.
+
+### Resilient Fallback
+
+If a live API call fails mid-demo, a cached successful run replays instead of the pipeline breaking — and it is always labeled as cached, never presented as a live result.
+
+### Interactive Dashboard
+
+The Next.js dashboard shows live and cached pipeline runs, per-agent status, and the full reasoning trace for a bug's lifecycle from detection through verified fix.
 
 ---
 
-## 1. Problem Statement
+## Architecture Overview
 
-Software teams generate bugs and security issues faster than humans can review and fix them. Today the loop is: a human notices an issue → a human decides how to fix it → a human writes the fix → another human reviews it. This is slow and doesn't scale.
+Three agents, each with one clear job. No agent does another agent's job. State passes explicitly between them through the LangGraph orchestrator.
 
-**AutoFix Swarm** automates this entire loop using a small team of specialized agents. It finds real issues in a codebase, uses Codex to write the actual fix, verifies the fix against tests, and produces a plain-English explanation of why the fix was made — so a human can trust and merge it quickly instead of redoing the work.
+```mermaid
+flowchart LR
+    R[Seeded Repo] --> W["Watcher<br/>GPT-5.6 semantic scan"]
+    W -->|issues.json| C["Codex<br/>writes + applies fix"]
+    C -->|fix diff| V["Reviewer<br/>pytest + GPT-5.6 explanation"]
+    V -->|verdict.json| D[Dashboard UI]
 
-> 💡 **One-line pitch:** *A system that finds its own bugs, fixes them with Codex, and explains why — so developers don't have to.*
-
----
-
-## 2. Architecture Overview
-
-Three agents, each with one clear job. No agent does another agent's job. State passes explicitly between them.
-
-```
-[Seeded Repo]
-     │
-     ▼
-┌─────────────┐      ┌─────────────┐      ┌──────────────┐
-│ 🔍 WATCHER  │ ───▶ │  🛠️ CODEX   │ ───▶ │ ✅ REVIEWER  │
-│ finds bugs  │      │ writes fix  │      │ verifies +   │
-│             │      │ (Fixer)     │      │ explains     │
-└─────────────┘      └─────────────┘      └──────────────┘
-     │                     │                     │
-     ▼                     ▼                     ▼
- issue list           local diff          pass/fail +
- (JSON)               (patch file)        explanation (JSON)
-                                                │
-                                                ▼
-                                        [📊 Dashboard UI]
+    C -.runs inside.-> S[Docker Sandbox<br/>no network access]
 ```
 
-### 🔍 Agent 1 — Watcher (bug detection)
+### 🔍 Watcher — bug detection
 - **Job:** Scan the target repo and produce a ranked list of real issues (not noise).
 - **Tools:** GPT-5.6 via OpenRouter API for semantic analysis — catches SQL injection, hardcoded secrets, off-by-one errors, authorization flaws, unused variables, and exception handling issues that static analysis misses.
 - **Output:** `issues.json` — a list of `{id, file, line_range, description, severity, confidence}`.
 - **Result:** 7/7 bugs detected (100% detection rate), 0 false positives.
-- **Explicit non-goal:** Watcher never writes fixes. It only detects and describes.
+- **Explicit non-goal:** never writes fixes — only detects and describes.
 
-### 🛠️ Agent 2 — Codex (the Fixer)
+### 🛠️ Codex — the Fixer
 - **Job:** Given one issue from `issues.json`, write the actual code fix.
-- **Tools:** OpenAI Codex CLI (primary) with OpenRouter API fallback. Operates on the repo directly — reads the flagged file/lines, produces a diff, and applies the patch locally to a working copy for the demo. **GitHub PR opening is out of v1 scope** — it's an extra auth/network dependency that doesn't change what the demo proves.
-- **Constraint:** Runs inside a **Docker sandbox** — no network access, writes confined to a scratch copy of the repo. Isolation is a stated safety design choice.
+- **Tools:** OpenAI Codex CLI (primary) with OpenRouter API fallback. Reads the flagged file/lines, produces a diff, and applies the patch locally to a working copy for the demo. GitHub PR opening is out of v1 scope — it's an extra auth/network dependency that doesn't change what the demo proves.
+- **Constraint:** Runs inside a Docker sandbox — no network access, writes confined to a scratch copy of the repo.
 - **Output:** `fix_<issue_id>.diff` + a short structured note on what changed and why.
 - **Result:** 6/7 fixes generated successfully via OpenRouter fallback.
 
-### ✅ Agent 3 — Reviewer / Explainer
+### ✅ Reviewer — verifier / explainer
 - **Job:** Verify the fix actually works and produce the final human-readable explanation.
 - **Tools:** `pytest` (the seeded repo's test suite) run against the patched code; GPT-5.6 turns the diff + deterministic test result into a plain-English explanation without changing the patch.
 - **Output:** `verdict_<issue_id>.json` — `{issue_id, tests_passed: bool, explanation: string, confidence: float}`.
 - **Result:** All 6 seeded tests pass after applying fixes.
-- **Explicit non-goal:** Reviewer never re-writes the fix.
+- **Explicit non-goal:** never re-writes the fix.
 
 ---
 
-## 3. Tech Stack
+## How the Pipeline Works
+
+1. **Scan** — Watcher runs GPT-5.6 semantic analysis over the seeded repo.
+2. **Detect** — Issues are ranked and written to `issues.json`.
+3. **Fix** — Codex (CLI, or OpenRouter fallback) writes a patch for each issue.
+4. **Sandbox** — The patch is applied and tested inside a network-disabled Docker container.
+5. **Verify** — pytest runs against the patched code for a deterministic pass/fail.
+6. **Explain** — GPT-5.6 turns the diff + test result into a plain-English explanation.
+7. **Fallback safely** — If a live call fails, a cached successful run replays instead.
+8. **Visualize** — The dashboard renders the full reasoning trace per bug.
+
+---
+
+## Technology Stack
+
+<div align="center">
+
+<img src="https://skillicons.dev/icons?i=python,fastapi,nextjs,react,ts,tailwind,docker,sqlite" alt="Python, FastAPI, Next.js, React, TypeScript, Tailwind CSS, Docker and SQLite" />
+
+<p>
+  <img src="https://img.shields.io/badge/OpenAI_Codex-CLI-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI Codex CLI">
+  <img src="https://img.shields.io/badge/GPT--5.6-via_OpenRouter-6E56CF?style=for-the-badge" alt="GPT-5.6 via OpenRouter">
+  <img src="https://img.shields.io/badge/LangGraph-Orchestration-1C3C3C?style=for-the-badge" alt="LangGraph">
+</p>
+
+</div>
+
+### Detailed Stack
 
 | Layer | Choice | Notes |
 |---|---|---|
@@ -130,9 +235,9 @@ Three agents, each with one clear job. No agent does another agent's job. State 
 
 ---
 
-## 4. Repository Structure
+## Repository Structure
 
-```
+```text
 autofix-swarm/
 ├── README.md                  # this file
 ├── agents/
@@ -174,7 +279,7 @@ autofix-swarm/
 
 ---
 
-## 5. Seeded Bug Repo & Eval Harness
+## Seeded Bug Repo & Eval Harness
 
 The demo repo (`seeded_repo/`) contains **7 intentionally planted bugs** of known types:
 
@@ -199,7 +304,7 @@ The demo repo (`seeded_repo/`) contains **7 intentionally planted bugs** of know
 
 ---
 
-## 6. Pipeline Test Results (July 19, 2026)
+## Pipeline Test Results (July 19, 2026)
 
 ### 🔍 Detection (Watcher Agent)
 - **7/7 bugs detected** by GPT-5.6 via OpenRouter API
@@ -217,83 +322,59 @@ The demo repo (`seeded_repo/`) contains **7 intentionally planted bugs** of know
 
 ---
 
-## 7. Success Criteria (what "done" means for this project)
-
-- [x] Pipeline runs end-to-end on the seeded repo without manual intervention
-- [x] Eval harness reports a real detection rate (100%) and fix success rate (85.7%)
-- [x] Dashboard shows the reasoning trace for at least one full bug lifecycle
-- [x] Codex is the component that writes every fix (with OpenRouter fallback)
-- [x] GPT-5.6 performs the documented Watcher gap analysis and Reviewer explanation
-- [x] Isolation is real (Docker: no network access, no write access outside the scratch repo copy)
-- [x] A cached fallback run exists in case of live API failure during the demo
-
----
-
-## 8. Demo Script (for the submission video / live demo)
-
-1. **Problem (15s):** State the one-line pitch from [Section 1](#1-problem-statement).
-2. **Live run (60–90s):** Trigger a scan on the seeded repo via the dashboard. Show GPT-5.6 detecting 7 bugs. Show Codex writing fixes. Show the deterministic test verdict and GPT-5.6 explanation.
-3. **Eval numbers (15s):** Show the accuracy: "We tested against 7 known bugs — 100% detection rate, 85.7% fix success rate."
-4. **Codex + GPT-5.6 collaboration (20s):** Explain that GPT-5.6 handles semantic detection and explanation, while Codex writes the actual code fixes.
-5. **Why this matters (15s):** Tie back to real engineering teams drowning in more issues than reviewers.
-6. **Close (10s):** State the human approval and sandbox boundary. Keep the final public YouTube video under three minutes.
-
----
-
-## 9. Submission Checklist (OpenAI Build Week requirements)
-
-- [x] Working project and project description
-- [ ] Public YouTube demo shorter than three minutes
-- [x] Public repository at [github.com/builtbyrehan/autofix-swarm](https://github.com/builtbyrehan/autofix-swarm)
-- [x] Correct Devpost category: **Developer Tools**
-- [x] README with setup, sample data, run instructions, Codex collaboration, key decisions, GPT-5.6 contribution
-- [ ] `/feedback` Codex Session ID
-- [x] Installation instructions and judge testing path
-- [ ] Submitted before **July 21, 2026, 5:00 PM PDT**
-
----
-
-## 10. Setup & Run Instructions
+## Setup & Run Instructions
 
 ### Prerequisites
 
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)
-![Docker Desktop](https://img.shields.io/badge/Docker%20Desktop-Required-2496ED?style=flat-square&logo=docker&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white)
-![OpenRouter](https://img.shields.io/badge/OpenRouter-API%20Key-6E56CF?style=flat-square)
-
+- Git
 - Python 3.11+ (tested with 3.14.3)
 - Docker Desktop running (for sandbox isolation)
 - Node.js 18+ (for frontend)
 - OpenRouter API key (free from [openrouter.ai](https://openrouter.ai))
 
-### Quick Start
+### Clone
 
-```powershell
-# 1. Clone and setup Python
+```bash
 git clone https://github.com/builtbyrehan/autofix-swarm.git
 cd autofix-swarm
+```
+
+### Backend
+
+```powershell
 python -m venv .venv
 .\.venv\Scripts\activate
 pip install -e ".[test]"
-
-# 2. Configure environment
 copy .env.example .env
 # Edit .env and add your OpenRouter API key:
 # OPENAI_API_KEY=sk-or-v1-your-key-here
-
-# 3. Run the backend
 python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+```
 
-# 4. Run the frontend (separate terminal)
+Available locally:
+
+```text
+API:      http://localhost:8000
+Swagger:  http://localhost:8000/docs
+```
+
+### Frontend
+
+```powershell
 cd frontend
 npm install
 npm run dev
 ```
 
+Open:
+
+```text
+http://localhost:3000
+```
+
 ### Test the Pipeline
 
-**Via API (http://localhost:8000/docs):**
+**Via API (`http://localhost:8000/docs`):**
 ```json
 POST /run
 {
@@ -315,7 +396,25 @@ POST /run
 powershell -ExecutionPolicy Bypass -File run_pipeline_test.ps1
 ```
 
-### API Endpoints
+---
+
+## Environment Variables
+
+### Backend — `.env`
+
+```env
+OPENAI_API_KEY=sk-or-v1-your-openrouter-key-here
+OPENROUTER_API_BASE_URL=https://openrouter.ai/api/v1
+CODEX_CLI_ENABLED=true
+DOCKER_SANDBOX_ENABLED=true
+```
+
+> [!CAUTION]
+> Never commit `.env`, API keys, or Codex/OpenRouter credentials.
+
+---
+
+## API Reference
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -335,7 +434,64 @@ powershell -ExecutionPolicy Bypass -File run_pipeline_test.ps1
 
 ---
 
-## 11. Explicit Non-Goals (to prevent scope creep)
+## Success Criteria
+
+- [x] Pipeline runs end-to-end on the seeded repo without manual intervention
+- [x] Eval harness reports a real detection rate (100%) and fix success rate (85.7%)
+- [x] Dashboard shows the reasoning trace for at least one full bug lifecycle
+- [x] Codex is the component that writes every fix (with OpenRouter fallback)
+- [x] GPT-5.6 performs the documented Watcher gap analysis and Reviewer explanation
+- [x] Isolation is real (Docker: no network access, no write access outside the scratch repo copy)
+- [x] A cached fallback run exists in case of live API failure during the demo
+
+---
+
+## Reliability & Safety Design
+
+### Separation of Concerns
+
+```text
+Bug detection      → GPT-5.6 (semantic analysis, read-only)
+Fix generation      → Codex CLI / OpenRouter fallback (writes a diff only)
+Fix application      → Docker sandbox (network-disabled, scratch copy only)
+Verification         → pytest (deterministic pass/fail)
+Explanation           → GPT-5.6 (grounded in diff + test result, cannot alter the patch)
+```
+
+### Why This Matters
+
+- GPT-5.6 never decides whether a fix is correct — pytest does.
+- Codex never runs outside the sandbox, and the sandbox has no network access.
+- The Reviewer's explanation is generated from evidence, not free narration.
+- A failed live API call falls back to a clearly labeled cached run instead of breaking the demo.
+
+---
+
+## Demo Script (for the submission video / live demo)
+
+1. **Problem (15s):** State the one-line pitch from [Why AutoFix Swarm](#why-autofix-swarm).
+2. **Live run (60–90s):** Trigger a scan on the seeded repo via the dashboard. Show GPT-5.6 detecting 7 bugs. Show Codex writing fixes. Show the deterministic test verdict and GPT-5.6 explanation.
+3. **Eval numbers (15s):** Show the accuracy: "We tested against 7 known bugs — 100% detection rate, 85.7% fix success rate."
+4. **Codex + GPT-5.6 collaboration (20s):** Explain that GPT-5.6 handles semantic detection and explanation, while Codex writes the actual code fixes.
+5. **Why this matters (15s):** Tie back to real engineering teams drowning in more issues than reviewers.
+6. **Close (10s):** State the human approval and sandbox boundary. Keep the final public YouTube video under three minutes.
+
+---
+
+## Submission Checklist (OpenAI Build Week requirements)
+
+- [x] Working project and project description
+- [ ] Public YouTube demo shorter than three minutes
+- [x] Public repository at [github.com/builtbyrehan/autofix-swarm](https://github.com/builtbyrehan/autofix-swarm)
+- [x] Correct Devpost category: **Developer Tools**
+- [x] README with setup, sample data, run instructions, Codex collaboration, key decisions, GPT-5.6 contribution
+- [ ] `/feedback` Codex Session ID
+- [x] Installation instructions and judge testing path
+- [ ] Submitted before **July 21, 2026, 5:00 PM PDT**
+
+---
+
+## Explicit Non-Goals (to prevent scope creep)
 
 - No support for languages beyond the seeded repo's Python code for this submission.
 - No production deployment — this is a working prototype demonstrated against a controlled seeded repo.
@@ -344,7 +500,7 @@ powershell -ExecutionPolicy Bypass -File run_pipeline_test.ps1
 
 ---
 
-## 12. Key Technical Decisions
+## Key Technical Decisions
 
 1. **OpenRouter as primary LLM provider** — Uses free-tier models for detection and explanation, avoiding OpenAI API billing complexity during the hackathon.
 2. **Codex CLI with OpenRouter fallback** — Tries Codex CLI first (when available), falls back to OpenRouter API for fix generation.
@@ -355,7 +511,66 @@ powershell -ExecutionPolicy Bypass -File run_pipeline_test.ps1
 
 ---
 
+## Known Limitations
+
+- Only the seeded Python demo repo is supported in this version — no arbitrary-repo input yet.
+- No retry loop: a failed fix or timeout is not automatically retried in v1.
+- GitHub PR opening is out of scope — fixes are applied to a local scratch copy only.
+- Fix success rate is 85.7% (6/7), not 100% — one fix failed on an API timeout.
+- This is a hackathon prototype, not a production-hardened tool.
+
+---
+
+## Roadmap
+
+### Completed
+
+- [x] GPT-5.6 semantic bug detection (Watcher)
+- [x] Codex CLI + OpenRouter fallback fix generation
+- [x] pytest-based verification + GPT-5.6 explanation (Reviewer)
+- [x] LangGraph orchestrator wiring all three agents
+- [x] Docker sandbox isolation
+- [x] FastAPI backend with full endpoint set
+- [x] Next.js dashboard with live/cached data
+- [x] SQLite pipeline logging
+- [x] Eval harness against 7 seeded bugs
+- [x] Cached demo fallback
+
+### Next
+
+- [ ] Retry loop for failed fixes
+- [ ] GitHub PR opening as an optional step
+- [ ] Arbitrary public-repo input beyond the seeded demo
+- [ ] Multi-language support beyond Python
+- [ ] CI/CD integration for automatic scans on push
+
+---
+
+## Acknowledgements
+
+AutoFix Swarm acknowledges:
+
+- **OpenAI** for Codex, GPT-5.6, and the Build Week event;
+- **OpenRouter** for free-tier inference used as the detection/explanation and fix-generation fallback;
+- the open-source communities behind FastAPI, Next.js, LangGraph, Docker, and pytest.
+
+### Trademark Notice
+
+OpenAI, Codex, and all other product names and logos are trademarks of their respective owners. Their appearance in this README identifies technologies, platforms, and event participation, and does not imply additional endorsement beyond the documented relationship.
+
+---
+
+## License
+
+No open-source license is currently declared.
+
+Until a `LICENSE` file is added, the repository remains under the copyright rights of its owner. Add a license before inviting unrestricted external reuse.
+
+---
+
 <div align="center">
+
+**AutoFix Swarm — Find the bug. Fix the bug. Explain the fix.**
 
 Built for **OpenAI Build Week** — Codex Challenge · Developer Tools track
 
