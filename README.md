@@ -1,20 +1,60 @@
-# AutoFix Swarm — Autonomous Bug Detection & Remediation Agents
+<div align="center">
 
-> **Project for:** OpenAI Build Week (Codex Challenge)
-> **Devpost track:** Developer Tools
-> **Required OpenAI technologies:** Codex + GPT-5.6
-> **Runtime roles:** GPT-5.6 detects issues via semantic analysis; Codex (with OpenRouter fallback) writes and applies fixes; GPT-5.6 produces the final review explanation
+# 🤖 AutoFix Swarm
+### Autonomous Bug Detection & Remediation Agents
+
+**A system that finds its own bugs, fixes them with Codex, and explains why — so developers don't have to.**
+
+[![OpenAI Build Week](https://img.shields.io/badge/OpenAI-Build%20Week-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com)
+[![Codex](https://img.shields.io/badge/Codex-Challenge-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com)
+[![Devpost](https://img.shields.io/badge/Track-Developer%20Tools-003E54?style=for-the-badge&logo=devpost&logoColor=white)](https://devpost.com)
+
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-14-000000?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Frontend-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind](https://img.shields.io/badge/Tailwind-CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Docker](https://img.shields.io/badge/Docker-Sandbox-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
+[![SQLite](https://img.shields.io/badge/SQLite-Logging-003B57?style=flat-square&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![Pytest](https://img.shields.io/badge/Pytest-Eval-0A9EDC?style=flat-square&logo=pytest&logoColor=white)](https://pytest.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](#)
+
+</div>
+
+---
+
+## 📋 Table of Contents
+
+- [Build Week Requirements](#-build-week-delivery-requirements-verified)
+- [Problem Statement](#1-problem-statement)
+- [Architecture Overview](#2-architecture-overview)
+- [Tech Stack](#3-tech-stack)
+- [Repository Structure](#4-repository-structure)
+- [Seeded Bug Repo & Eval Harness](#5-seeded-bug-repo--eval-harness)
+- [Pipeline Test Results](#6-pipeline-test-results-july-19-2026)
+- [Success Criteria](#7-success-criteria-what-done-means-for-this-project)
+- [Demo Script](#8-demo-script-for-the-submission-video--live-demo)
+- [Submission Checklist](#9-submission-checklist-openai-build-week-requirements)
+- [Setup & Run Instructions](#10-setup--run-instructions)
+- [API Endpoints](#api-endpoints)
+- [Explicit Non-Goals](#11-explicit-non-goals-to-prevent-scope-creep)
+- [Key Technical Decisions](#12-key-technical-decisions)
+
+---
+
+## ✅ Build Week Delivery Requirements (Verified)
+
+| Requirement | Status |
+|---|---|
+| Project built with **Codex** + **GPT-5.6** in the Developer Tools category | ✅ Done |
+| Public YouTube demo, under 3 minutes, covering both Codex & GPT-5.6 usage | ⬜ Pending |
+| Public repository with licensing (or private + shared with `testing@devpost.com` and `build-week-event@openai.com`) | ✅ Done |
+| README with setup, sample data, run instructions, Codex collaboration, key decisions, GPT-5.6 contribution | ✅ Done |
+| `/feedback` Codex Session ID from the core-build thread | ⬜ Pending |
+| Installation instructions, supported platforms, judge testing path | ✅ Done |
+
 > **Deadline:** July 21, 2026, 5:00 PM PT (July 22, 2026, 5:00 AM PKT)
-> **Implementation status:** Full pipeline complete and verified. GPT-5.6 detection: 7/7 bugs found (100%). Fix generation: 6/7 via OpenRouter API. All 6 seeded tests pass. Docker sandbox, FastAPI backend, SQLite logging, Next.js dashboard, and demo cache all functional.
-
-### Verified Build Week delivery requirements
-
-- Submit a working project built with Codex and GPT-5.6 in the **Developer Tools** category.
-- Provide a public YouTube demo shorter than three minutes. The audio must cover what was built and how both Codex and GPT-5.6 were used.
-- Provide a repository that is public with relevant licensing, or private and shared with `testing@devpost.com` and `build-week-event@openai.com`.
-- Include setup instructions, sample data, run instructions, Codex collaboration details, key human decisions, and the GPT-5.6 contribution in this README.
-- Provide the `/feedback` Codex Session ID from the thread where most core functionality was built.
-- Because this is a developer tool, include installation instructions, supported platforms, and a way for judges to test it without rebuilding it from scratch.
 
 ---
 
@@ -24,7 +64,7 @@ Software teams generate bugs and security issues faster than humans can review a
 
 **AutoFix Swarm** automates this entire loop using a small team of specialized agents. It finds real issues in a codebase, uses Codex to write the actual fix, verifies the fix against tests, and produces a plain-English explanation of why the fix was made — so a human can trust and merge it quickly instead of redoing the work.
 
-**One-line pitch:** *A system that finds its own bugs, fixes them with Codex, and explains why — so developers don't have to.*
+> 💡 **One-line pitch:** *A system that finds its own bugs, fixes them with Codex, and explains why — so developers don't have to.*
 
 ---
 
@@ -37,7 +77,7 @@ Three agents, each with one clear job. No agent does another agent's job. State 
      │
      ▼
 ┌─────────────┐      ┌─────────────┐      ┌──────────────┐
-│   WATCHER   │ ───▶ │    CODEX    │ ───▶ │   REVIEWER   │
+│ 🔍 WATCHER  │ ───▶ │  🛠️ CODEX   │ ───▶ │ ✅ REVIEWER  │
 │ finds bugs  │      │ writes fix  │      │ verifies +   │
 │             │      │ (Fixer)     │      │ explains     │
 └─────────────┘      └─────────────┘      └──────────────┘
@@ -47,24 +87,24 @@ Three agents, each with one clear job. No agent does another agent's job. State 
  (JSON)               (patch file)        explanation (JSON)
                                                 │
                                                 ▼
-                                        [Dashboard UI]
+                                        [📊 Dashboard UI]
 ```
 
-### Agent 1 — Watcher (bug detection)
+### 🔍 Agent 1 — Watcher (bug detection)
 - **Job:** Scan the target repo and produce a ranked list of real issues (not noise).
 - **Tools:** GPT-5.6 via OpenRouter API for semantic analysis — catches SQL injection, hardcoded secrets, off-by-one errors, authorization flaws, unused variables, and exception handling issues that static analysis misses.
 - **Output:** `issues.json` — a list of `{id, file, line_range, description, severity, confidence}`.
 - **Result:** 7/7 bugs detected (100% detection rate), 0 false positives.
 - **Explicit non-goal:** Watcher never writes fixes. It only detects and describes.
 
-### Agent 2 — Codex (the Fixer)
+### 🛠️ Agent 2 — Codex (the Fixer)
 - **Job:** Given one issue from `issues.json`, write the actual code fix.
 - **Tools:** OpenAI Codex CLI (primary) with OpenRouter API fallback. Operates on the repo directly — reads the flagged file/lines, produces a diff, and applies the patch locally to a working copy for the demo. **GitHub PR opening is out of v1 scope** — it's an extra auth/network dependency that doesn't change what the demo proves.
 - **Constraint:** Runs inside a **Docker sandbox** — no network access, writes confined to a scratch copy of the repo. Isolation is a stated safety design choice.
 - **Output:** `fix_<issue_id>.diff` + a short structured note on what changed and why.
 - **Result:** 6/7 fixes generated successfully via OpenRouter fallback.
 
-### Agent 3 — Reviewer / Explainer
+### ✅ Agent 3 — Reviewer / Explainer
 - **Job:** Verify the fix actually works and produce the final human-readable explanation.
 - **Tools:** `pytest` (the seeded repo's test suite) run against the patched code; GPT-5.6 turns the diff + deterministic test result into a plain-English explanation without changing the patch.
 - **Output:** `verdict_<issue_id>.json` — `{issue_id, tests_passed: bool, explanation: string, confidence: float}`.
@@ -77,16 +117,16 @@ Three agents, each with one clear job. No agent does another agent's job. State 
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Bug-detection LLM | **GPT-5.6 via OpenRouter API** | `nvidia/nemotron-3-ultra-550b-a55b:free` model; catches semantic issues static analysis misses |
-| Fix-writing agent | **OpenAI Codex CLI + OpenRouter fallback** | Codex CLI is primary; OpenRouter API used when Codex CLI is unavailable or blocked |
-| Explanation LLM | **GPT-5.6 via OpenRouter API** | Explains the diff and test evidence; never writes or revises code |
-| Orchestration | **LangGraph** (Python) | Explicit state machine: Watcher → Codex → Reviewer, linear (no retry loop in v1) |
-| Backend/API | **FastAPI** (Python) | Exposes `/scan`, `/fix`, `/verify`, `/run`, `/results`, `/demo/cached` endpoints |
-| Sandbox | **Docker** (network-disabled, read-only, resource-limited containers) | No network access, writes confined to a scratch copy of the repo |
-| Database/logging | **SQLite** | Logs every agent action + result, doubles as eval data |
-| Frontend | **Next.js 14 + React 18 + TypeScript + Tailwind** | Dashboard with live/cached data, animations, and pipeline status |
-| Testing/eval | **pytest** + a seeded bug repo | Produces the live accuracy number for the demo |
-| Fallback inference | Cached successful run | The fallback may replay evidence but must not be presented as a live GPT-5.6 call |
+| 🧠 Bug-detection LLM | **GPT-5.6 via OpenRouter API** | `nvidia/nemotron-3-ultra-550b-a55b:free` model; catches semantic issues static analysis misses |
+| 🛠️ Fix-writing agent | **OpenAI Codex CLI + OpenRouter fallback** | Codex CLI is primary; OpenRouter API used when Codex CLI is unavailable or blocked |
+| 💬 Explanation LLM | **GPT-5.6 via OpenRouter API** | Explains the diff and test evidence; never writes or revises code |
+| 🔗 Orchestration | **LangGraph** (Python) | Explicit state machine: Watcher → Codex → Reviewer, linear (no retry loop in v1) |
+| ⚙️ Backend/API | **FastAPI** (Python) | Exposes `/scan`, `/fix`, `/verify`, `/run`, `/results`, `/demo/cached` endpoints |
+| 📦 Sandbox | **Docker** (network-disabled, read-only, resource-limited containers) | No network access, writes confined to a scratch copy of the repo |
+| 🗄️ Database/logging | **SQLite** | Logs every agent action + result, doubles as eval data |
+| 🖥️ Frontend | **Next.js 14 + React 18 + TypeScript + Tailwind** | Dashboard with live/cached data, animations, and pipeline status |
+| 🧪 Testing/eval | **pytest** + a seeded bug repo | Produces the live accuracy number for the demo |
+| 🔁 Fallback inference | Cached successful run | The fallback may replay evidence but must not be presented as a live GPT-5.6 call |
 
 ---
 
@@ -140,35 +180,38 @@ The demo repo (`seeded_repo/`) contains **7 intentionally planted bugs** of know
 
 | Bug | File | Type | Detection | Fix |
 |-----|------|------|-----------|-----|
-| SQL injection | payments.py | Security | ✅ GPT-5.6 | Parameterized query |
-| Hardcoded secret | auth.py | Security | ✅ GPT-5.6 | Load from environment |
-| Off-by-one | inventory.py | Logic | ✅ GPT-5.6 | Fix range boundary |
-| Threshold comparison | shipping.py | Logic | ✅ GPT-5.6 | `>=` instead of `>` |
-| Unused variable | shipping.py | Code quality | ✅ GPT-5.6 | Use normalized value |
-| Authorization flaw | auth.py | Semantic | ✅ GPT-5.6 | Check actor role |
-| Exception handling | config.py | Code quality | ✅ GPT-5.6 | Catch and raise ConfigError |
+| SQL injection | `payments.py` | 🔐 Security | ✅ GPT-5.6 | Parameterized query |
+| Hardcoded secret | `auth.py` | 🔐 Security | ✅ GPT-5.6 | Load from environment |
+| Off-by-one | `inventory.py` | 🐛 Logic | ✅ GPT-5.6 | Fix range boundary |
+| Threshold comparison | `shipping.py` | 🐛 Logic | ✅ GPT-5.6 | `>=` instead of `>` |
+| Unused variable | `shipping.py` | 🧹 Code quality | ✅ GPT-5.6 | Use normalized value |
+| Authorization flaw | `auth.py` | 🔐 Semantic | ✅ GPT-5.6 | Check actor role |
+| Exception handling | `config.py` | 🧹 Code quality | ✅ GPT-5.6 | Catch and raise `ConfigError` |
 
 **Eval results (July 19, 2026):**
-- Detection rate: **100%** (7/7 bugs found)
-- Fix success rate: **85.7%** (6/7 fixes generated)
-- False positive count: **0**
-- All 6 seeded tests pass after fixes
+
+| Metric | Result |
+|---|---|
+| Detection rate | **100%** (7/7 bugs found) |
+| Fix success rate | **85.7%** (6/7 fixes generated) |
+| False positives | **0** |
+| Tests passing after fix | **6/6** |
 
 ---
 
 ## 6. Pipeline Test Results (July 19, 2026)
 
-### Detection (Watcher Agent)
+### 🔍 Detection (Watcher Agent)
 - **7/7 bugs detected** by GPT-5.6 via OpenRouter API
 - **100% detection rate**, 0 false positives
 - Average detection time: ~60 seconds
 
-### Fixing (Codex Fixer Agent)
+### 🛠️ Fixing (Codex Fixer Agent)
 - **6/7 fixes generated** via OpenRouter API (1 failed due to API timeout)
 - All fixes validated against patch constraints
 - Docker sandbox isolation verified
 
-### Verification (Reviewer Agent)
+### ✅ Verification (Reviewer Agent)
 - All 6 seeded tests pass after applying fixes
 - GPT-5.6 explanations generated for each fix
 
@@ -188,7 +231,7 @@ The demo repo (`seeded_repo/`) contains **7 intentionally planted bugs** of know
 
 ## 8. Demo Script (for the submission video / live demo)
 
-1. **Problem (15s):** State the one-line pitch from Section 1.
+1. **Problem (15s):** State the one-line pitch from [Section 1](#1-problem-statement).
 2. **Live run (60–90s):** Trigger a scan on the seeded repo via the dashboard. Show GPT-5.6 detecting 7 bugs. Show Codex writing fixes. Show the deterministic test verdict and GPT-5.6 explanation.
 3. **Eval numbers (15s):** Show the accuracy: "We tested against 7 known bugs — 100% detection rate, 85.7% fix success rate."
 4. **Codex + GPT-5.6 collaboration (20s):** Explain that GPT-5.6 handles semantic detection and explanation, while Codex writes the actual code fixes.
@@ -201,7 +244,7 @@ The demo repo (`seeded_repo/`) contains **7 intentionally planted bugs** of know
 
 - [x] Working project and project description
 - [ ] Public YouTube demo shorter than three minutes
-- [x] Public repository at https://github.com/builtbyrehan/autofix-swarm
+- [x] Public repository at [github.com/builtbyrehan/autofix-swarm](https://github.com/builtbyrehan/autofix-swarm)
 - [x] Correct Devpost category: **Developer Tools**
 - [x] README with setup, sample data, run instructions, Codex collaboration, key decisions, GPT-5.6 contribution
 - [ ] `/feedback` Codex Session ID
@@ -213,6 +256,12 @@ The demo repo (`seeded_repo/`) contains **7 intentionally planted bugs** of know
 ## 10. Setup & Run Instructions
 
 ### Prerequisites
+
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)
+![Docker Desktop](https://img.shields.io/badge/Docker%20Desktop-Required-2496ED?style=flat-square&logo=docker&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white)
+![OpenRouter](https://img.shields.io/badge/OpenRouter-API%20Key-6E56CF?style=flat-square)
+
 - Python 3.11+ (tested with 3.14.3)
 - Docker Desktop running (for sandbox isolation)
 - Node.js 18+ (for frontend)
@@ -303,3 +352,11 @@ powershell -ExecutionPolicy Bypass -File run_pipeline_test.ps1
 4. **LangGraph orchestrator** — Linear state machine (no retry loop in v1) keeps the pipeline simple and debuggable.
 5. **SQLite logging** — Zero-setup database that doubles as eval data source.
 6. **Cached demo fallback** — Successful runs are auto-cached for offline replay if live APIs fail during the demo.
+
+---
+
+<div align="center">
+
+Built for **OpenAI Build Week** — Codex Challenge · Developer Tools track
+
+</div>
